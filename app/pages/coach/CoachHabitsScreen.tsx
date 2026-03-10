@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  SafeAreaView,
-  Modal,
-  Alert,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import useProgramStore from "@/store/useProgramStore";
 import api from "@/utils/api";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const BASE_URL  = "http://localhost:5000";
+const BASE_URL  = "http://sculptbyashton.com:5000";
 const BAR_MAX_H = 100;
 const STEP_GOAL = 10000;
 
@@ -232,9 +232,10 @@ export default function CoachHabitsScreen() {
   ════════════════════════════════════════════════════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -706,7 +707,7 @@ const s = StyleSheet.create({
   topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6 },
   backBtn:       { width: 36, height: 36, justifyContent: "center" },
   backBtnText:   { fontSize: 28, color: BLACK, fontWeight: "300", lineHeight: 34 },
-  pageTitle:     { flex: 1, textAlign: "center", fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "System", letterSpacing: -0.3 },
+  pageTitle:     { flex: 1, textAlign: "center", fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", letterSpacing: -0.3 },
   addBtn:        { width: 36, height: 36, justifyContent: "center", alignItems: "flex-end" },
   addBtnText:    { fontSize: 24, color: BLACK },
   addBtnDisabled:{ opacity: 0.3 },
@@ -723,13 +724,13 @@ const s = StyleSheet.create({
   emptyScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: 10, paddingHorizontal: 40 },
   emptyScreenEmoji:   { fontSize: 54, marginBottom: 4 },
   emptyScreenTitle:   { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "System" },
-  emptyScreenSub:     { fontSize: 14, color: GRAY500, textAlign: "center", fontFamily: "System", lineHeight: 20 },
+  emptyScreenSub:     { fontSize: 14, color: GRAY500, textAlign: "center", fontFamily: "Lato-Regular", lineHeight: 20 },
   emptyScreenBtn:     { marginTop: 10, backgroundColor: BLACK, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 14 },
   emptyScreenBtnText: { color: WHITE, fontWeight: "800", fontSize: 15, fontFamily: "System" },
   dateStrip:     { flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 12, paddingBottom: 10, paddingTop: 2 },
   dateItem:      { alignItems: "center", paddingVertical: 7, paddingHorizontal: 9, borderRadius: 13 },
   dateItemActive:{ backgroundColor: "rgba(255,255,255,0.88)" },
-  dateMonth:     { fontSize: 10, color: GRAY500, fontFamily: "System", marginBottom: 2 },
+  dateMonth:     { fontSize: 10, color: GRAY500, fontFamily: "Lato-Regular", marginBottom: 2 },
   dateNum:       { fontSize: 16, fontWeight: "700", color: GRAY500, fontFamily: "System" },
   dateTextActive:{ color: BLACK },
   scrollContent: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 100 },
@@ -738,7 +739,7 @@ const s = StyleSheet.create({
   chartTitle: { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "System" },
   chartSub:   { fontSize: 12, color: GRAY500, marginTop: 3, fontFamily: "System" },
   todayBadge:      { alignItems: "flex-end" },
-  todayBadgeSteps: { fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "System", lineHeight: 26 },
+  todayBadgeSteps: { fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", lineHeight: 26 },
   todayBadgeLabel: { fontSize: 11, color: GRAY500, fontFamily: "System" },
   todayBadgePct:   { fontSize: 13, fontWeight: "700", color: BLACK, fontFamily: "System" },
   chartBody: { flexDirection: "row", height: BAR_MAX_H + 24, marginBottom: 4 },
@@ -748,7 +749,7 @@ const s = StyleSheet.create({
   gridLine:  { position: "absolute", left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: GRAY200 },
   goalLine:  { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: PINK },
   barCol:      { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 3 },
-  barTopLabel: { fontSize: 8, color: GRAY500, fontFamily: "System", height: 12 },
+  barTopLabel: { fontSize: 8, color: GRAY500, fontFamily: "Lato-Regular", height: 12 },
   bar:         { width: "60%", borderRadius: 6, backgroundColor: GRAY300 },
   barHit:      { backgroundColor: GREEN },
   barToday:    { backgroundColor: BLACK },
@@ -790,7 +791,7 @@ const s = StyleSheet.create({
   emptyCard:  { backgroundColor: "rgba(255,255,255,0.8)", borderRadius: 18, padding: 32, alignItems: "center", gap: 8 },
   emptyEmoji: { fontSize: 40, marginBottom: 4 },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "System" },
-  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "System", textAlign: "center" },
+  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular", textAlign: "center" },
 });
 
 const m = StyleSheet.create({
@@ -824,7 +825,7 @@ const m = StyleSheet.create({
 
 const f = StyleSheet.create({
   label:       { fontSize: 11, fontWeight: "700", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8, fontFamily: "System" },
-  input:       { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, fontFamily: "System", borderWidth: 1, borderColor: GRAY200, marginBottom: 4 },
+  input:       { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200, marginBottom: 4 },
   typeRow:     { flexDirection: "row", gap: 10, marginBottom: 6 },
   typeChip:    { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center", backgroundColor: GRAY100, borderWidth: 1, borderColor: GRAY200 },
   typeChipOn:     { backgroundColor: BLACK, borderColor: BLACK },

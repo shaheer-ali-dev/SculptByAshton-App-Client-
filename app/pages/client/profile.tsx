@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
 import {
-  Platform,
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
   useWindowDimensions,
+  View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import * as ImagePicker from "expo-image-picker";
 import { useClientProfileStore, UserProfile } from "../../../store/useClientProfileStore";
 
 export default function ClientProfileScreen() {
@@ -95,9 +95,10 @@ export default function ClientProfileScreen() {
   if (!profile && loading) {
     return (
       <LinearGradient
-        colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-        locations={[0,0.2,0.5,0.8,1]}
-        start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+       colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
         style={s.container}
       >
         <View style={s.center}>
@@ -109,17 +110,17 @@ export default function ClientProfileScreen() {
   }
 
   const avatarUri = form.avatar
-    ? form.avatar.startsWith("http") ? form.avatar : `http://localhost:5000${form.avatar}`
+    ? form.avatar.startsWith("http") ? form.avatar : `http://sculptbyashton.com:5000${form.avatar}`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(form.firstName || "U")}&background=111111&color=ffffff&size=200`;
 
   const displayName = [form.firstName, form.lastName].filter(Boolean).join(" ") || "Your Name";
 
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{x:0.5, y:0}}
-      end={{x:0.5, y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <ScrollView
@@ -324,7 +325,7 @@ const s = StyleSheet.create({
     fontWeight: "800",
     color: BLACK,
     letterSpacing: -0.5,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     marginBottom: 20,
   },
 
@@ -373,14 +374,14 @@ const s = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     color: BLACK,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     letterSpacing: -0.3,
   },
   heroSub: {
     fontSize: 13,
     color: GRAY500,
     marginTop: 4,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
 
   /* ── SECTION LABELS ── */
@@ -390,7 +391,7 @@ const s = StyleSheet.create({
     color: GRAY500,
     textTransform: "uppercase",
     letterSpacing: 0.7,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     marginBottom: 8,
     marginLeft: 2,
   },
@@ -419,7 +420,7 @@ const s = StyleSheet.create({
     marginTop: 2,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
   input: {
     backgroundColor: GRAY100,
@@ -429,7 +430,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 12,
     fontSize: 14,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     borderWidth: 1,
     borderColor: GRAY200,
   },
@@ -463,7 +464,7 @@ const s = StyleSheet.create({
     color: WHITE,
     fontWeight: "800",
     fontSize: 16,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     letterSpacing: -0.2,
   },
   deleteBtn: {
@@ -478,6 +479,6 @@ const s = StyleSheet.create({
     color: "#ef4444",
     fontWeight: "700",
     fontSize: 15,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
 });

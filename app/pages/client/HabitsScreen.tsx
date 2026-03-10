@@ -185,9 +185,10 @@ export default function HabitsScreen() {
   ════════════════════════════════════════════════════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -240,16 +241,13 @@ export default function HabitsScreen() {
               <View style={s.chartHeader}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={s.chartTitle}>Weekly Steps</Text>
-                  <Text style={s.chartSub}>Goal: {STEP_GOAL.toLocaleString()} steps / day</Text>
                 </View>
                 <View style={s.todayBadge}>
                   <Text style={s.todayBadgeSteps}>
                     {todayStepsFromWeek.toLocaleString()}
                   </Text>
                   <Text style={s.todayBadgeLabel}>today</Text>
-                  <Text style={s.todayBadgePct}>
-                    {Math.min(Math.round(todayStepsFromWeek / STEP_GOAL * 100), 100)}%
-                  </Text>
+                 
                 </View>
               </View>
 
@@ -501,7 +499,7 @@ const s = StyleSheet.create({
   },
   backBtn:     { width: 36, height: 36, justifyContent: "center" },
   backBtnText: { fontSize: 28, color: BLACK, fontWeight: "300", lineHeight: 34 },
-  pageTitle:   { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "System", letterSpacing: -0.3 },
+  pageTitle:   { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", letterSpacing: -0.3 },
 
   /* DATE STRIP */
   dateStrip: {
@@ -520,8 +518,8 @@ const s = StyleSheet.create({
     marginHorizontal: 2,
   },
   dateItemActive:{ backgroundColor: "rgba(255,255,255,0.85)" },
-  dateMonth:     { fontSize: 11, color: GRAY500, fontFamily: "System", marginBottom: 2 },
-  dateNum:       { fontWeight: "700", color: GRAY500, fontFamily: "System" },
+  dateMonth:     { fontSize: 11, color: GRAY500, fontFamily: "Lato-Regular", marginBottom: 2 },
+  dateNum:       { fontWeight: "700", color: GRAY500, fontFamily: "Lato-Regular" },
   /* fontSize of dateNum set inline via dateNumSz */
   dateTextActive:{ color: BLACK },
 
@@ -547,13 +545,13 @@ const s = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between",
     alignItems: "flex-start", marginBottom: 16,
   },
-  chartTitle: { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "System" },
-  chartSub:   { fontSize: 12, color: GRAY500, marginTop: 3, fontFamily: "System" },
+  chartTitle: { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular" },
+  chartSub:   { fontSize: 12, color: GRAY500, marginTop: 3, fontFamily: "Lato-Regular" },
 
   todayBadge:      { alignItems: "flex-end" },
-  todayBadgeSteps: { fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "System", lineHeight: 26 },
-  todayBadgeLabel: { fontSize: 11, color: GRAY500, fontFamily: "System" },
-  todayBadgePct:   { fontSize: 13, fontWeight: "700", color: BLACK, fontFamily: "System" },
+  todayBadgeSteps: { fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", lineHeight: 26 },
+  todayBadgeLabel: { fontSize: 11, color: GRAY500, fontFamily: "Lato-Regular" },
+  todayBadgePct:   { fontSize: 13, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular" },
 
   /* chart body */
   chartBody: {
@@ -565,7 +563,7 @@ const s = StyleSheet.create({
     width: 34, justifyContent: "space-between",
     alignItems: "flex-end", paddingBottom: 20, paddingRight: 6,
   },
-  yLabel: { fontSize: 10, color: GRAY500, fontFamily: "System" },
+  yLabel: { fontSize: 10, color: GRAY500, fontFamily: "Lato-Regular" },
 
   chartGrid: {
     flex: 1, flexDirection: "row",
@@ -582,29 +580,29 @@ const s = StyleSheet.create({
   },
 
   barCol:      { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 3 },
-  barTopLabel: { fontSize: 8, color: GRAY500, fontFamily: "System", height: 12 },
+  barTopLabel: { fontSize: 8, color: GRAY500, fontFamily: "Lato-Regular", height: 12 },
   bar:         { width: "60%", borderRadius: 6, backgroundColor: GRAY300 },
   barHit:      { backgroundColor: GREEN },
   barToday:    { backgroundColor: BLACK },
   barSel:      { backgroundColor: GRAY500 },
-  barLabel:    { fontSize: 9, color: GRAY500, fontFamily: "System" },
+  barLabel:    { fontSize: 9, color: GRAY500, fontFamily: "Lato-Regular" },
   barLabelBold:{ color: BLACK, fontWeight: "700" },
 
   legend:     { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
   legendDot:  { width: 9, height: 9, borderRadius: 5 },
-  legendLabel:{ fontSize: 10, color: GRAY500, fontFamily: "System" },
+  legendLabel:{ fontSize: 10, color: GRAY500, fontFamily: "Lato-Regular" },
 
   /* goal bar below chart */
   goalBarWrap:   { marginTop: 14 },
   manualBtn:     { marginBottom: 8, alignSelf: "flex-start" },
   manualBtnText: {
     fontSize: 12, color: BLACK, fontWeight: "700",
-    textDecorationLine: "underline", fontFamily: "System",
+    textDecorationLine: "underline", fontFamily: "Lato-Regular",
   },
   goalBar:    { height: 6, backgroundColor: GRAY200, borderRadius: 3, overflow: "hidden" },
   goalBarFill:{ height: 6, borderRadius: 3 },
-  goalBarLabel:{ fontSize: 11, color: GRAY500, marginTop: 5, fontFamily: "System" },
+  goalBarLabel:{ fontSize: 11, color: GRAY500, marginTop: 5, fontFamily: "Lato-Regular" },
 
   /* PROGRESS CARD */
   progressCard: {
@@ -613,11 +611,11 @@ const s = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
   progressHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
-  progressTitle:  { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "System" },
-  progressCount:  { fontSize: 13, color: GRAY500, fontFamily: "System" },
+  progressTitle:  { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular" },
+  progressCount:  { fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular" },
   progressBar:    { height: 6, backgroundColor: GRAY200, borderRadius: 3, overflow: "hidden" },
   progressFill:   { height: 6, backgroundColor: BLACK, borderRadius: 3 },
-  progressPct:    { fontSize: 12, color: GRAY500, marginTop: 8, fontFamily: "System" },
+  progressPct:    { fontSize: 12, color: GRAY500, marginTop: 8, fontFamily: "Lato-Regular" },
 
   /* HABIT ROWS */
   habitRow: {
@@ -626,9 +624,9 @@ const s = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 12,
     shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 1,
   },
-  habitTitle:     { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "System", marginBottom: 3 },
+  habitTitle:     { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 3 },
   habitTitleDone: { textDecorationLine: "line-through", color: GRAY500 },
-  habitTime:      { fontSize: 12, color: GRAY500, fontFamily: "System" },
+  habitTime:      { fontSize: 12, color: GRAY500, fontFamily: "Lato-Regular" },
   habitTimeDone:  { textDecorationLine: "line-through" },
   habitCheck: {
     width: 38, height: 38, borderRadius: 19,
@@ -638,7 +636,7 @@ const s = StyleSheet.create({
   habitCheckDone: { backgroundColor: BLACK, borderColor: BLACK },
   habitCheckMark: { color: WHITE, fontWeight: "800", fontSize: 15 },
 
-  hint: { textAlign: "center", color: GRAY300, fontSize: 11, marginTop: 8, fontFamily: "System", lineHeight: 17 },
+  hint: { textAlign: "center", color: GRAY300, fontSize: 11, marginTop: 8, fontFamily: "Lato-Regular", lineHeight: 17 },
 
   /* EMPTY */
   emptyCard: {
@@ -646,8 +644,8 @@ const s = StyleSheet.create({
     padding: 36, alignItems: "center", gap: 8, marginTop: 12,
   },
   emptyEmoji: { fontSize: 48, marginBottom: 4 },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: BLACK, fontFamily: "System" },
-  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "System", textAlign: "center" },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular" },
+  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular", textAlign: "center" },
 });
 
 /* ─── Modal styles ───────────────────────────────────────────── */
@@ -661,23 +659,23 @@ const m = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between",
     alignItems: "center", marginBottom: 8,
   },
-  sheetTitle:   { fontSize: 18, fontWeight: "800", color: "#111", fontFamily: "System", flex: 1, marginRight: 10 },
+  sheetTitle:   { fontSize: 18, fontWeight: "800", color: "#111", fontFamily: "Lato-Regular", flex: 1, marginRight: 10 },
   closeBtn:     { width: 34, height: 34, borderRadius: 17, backgroundColor: "#f5f5f5", justifyContent: "center", alignItems: "center" },
   closeBtnText: { fontSize: 14, fontWeight: "700", color: "#111" },
-  targetHint:   { fontSize: 13, color: GRAY500, marginBottom: 16, fontFamily: "System" },
+  targetHint:   { fontSize: 13, color: GRAY500, marginBottom: 16, fontFamily: "Lato-Regular" },
   label: {
     fontSize: 11, fontWeight: "700", color: "#737373",
     textTransform: "uppercase", letterSpacing: 0.6,
-    marginBottom: 8, fontFamily: "System",
+    marginBottom: 8, fontFamily: "Lato-Regular",
   },
   input: {
     backgroundColor: "#f5f5f5", color: "#111", borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 13, fontSize: 18,
-    fontFamily: "System", borderWidth: 1, borderColor: "#e8e8e8",
+    fontFamily: "Lato-Regular", borderWidth: 1, borderColor: "#e8e8e8",
     marginBottom: 4, fontWeight: "700", textAlign: "center",
   },
   saveBtn:     { backgroundColor: "#111", paddingVertical: 15, borderRadius: 14, alignItems: "center", marginTop: 20 },
-  saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 16, fontFamily: "System" },
+  saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 16, fontFamily: "Lato-Regular" },
   cancelRow:   { marginTop: 12, marginBottom: 20 },
   cancelText:  { color: "#aaa", textAlign: "center", fontSize: 14 },
 });

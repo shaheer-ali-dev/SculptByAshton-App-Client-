@@ -1,19 +1,23 @@
-import React, { useEffect, useState, useRef } from "react";
 import { Audio } from "expo-av";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
   ActivityIndicator,
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useChatStore, Message } from "../../../store/useMessagingStore";
+
+
+import { Message, useChatStore } from "../../../store/useMessagingStore";
 import api from "../../../utils/api";
 
 /**
@@ -23,6 +27,8 @@ import api from "../../../utils/api";
  * - Uses expo-router's useRouter for navigation (push to VideoCall screen).
  * - Emits call:init when user presses Video button and navigates caller to VideoCall screen.
  * - Listens for incomingCall from the store and navigates to VideoCall screen as callee.
+ * - Fixed: composer bar now respects safe area insets so it doesn't clash with
+ *   the device's home indicator / back gesture bar at the bottom.
  *
  * Notes:
  * - Expects a route file at /pages/VideoCallScreen (or a matching route in your file-based routing).
@@ -31,6 +37,7 @@ import api from "../../../utils/api";
 
 export default function ClientChatScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); // ← safe area hook
 
   const initSocket = useChatStore((s) => s.initSocket);
   const fetchMessages = useChatStore((s) => s.fetchMessages);
@@ -596,7 +603,8 @@ export default function ClientChatScreen() {
       alert("Failed to start call");
     }
   };
-console.log("COACH NAME" , coachProfile?.name)
+
+  console.log("COACH NAME", coachProfile?.name);
 
   // format seconds to mm:ss
   const fmtTime = (s: number) => {
@@ -613,46 +621,10 @@ console.log("COACH NAME" , coachProfile?.name)
     <KeyboardAvoidingView
       style={[styles.kav, { backgroundColor: styles.tokens.bg }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      // ↓ On iOS, KeyboardAvoidingView needs to account for the bottom inset too
+      keyboardVerticalOffset={insets.bottom}
     >
       <View style={styles.container}>
-        {/* LEFT PANE */}
-        {/* <View style={[styles.leftPane, !showLeftPane && styles.leftPaneCollapsed]}>
-          <Text style={styles.heading}>Contacts</Text>
-
-          {loading ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={styles.tokens.accent} />
-            </View>
-          ) : coachProfile ? (
-            <TouchableOpacity
-              style={styles.userCard}
-              onPress={async () => {
-                if (!coachProfile?.coachId) return;
-                await fetchMessages(coachProfile.coachId);
-              }}
-              activeOpacity={0.9}
-            >
-              <View style={styles.userRow}>
-                <View>
-                  <Text style={styles.userName}>{coachProfile.name}</Text>
-                  <Text style={styles.userRole}>{(coachProfile as any).role || "Coach"}</Text>
-                </View>
-
-                <View style={styles.userRight}>
-                  <View
-                    style={[
-                      styles.onlineDot,
-                      { backgroundColor: onlineUsers.includes(coachProfile.coachId) ? styles.tokens.accent : "#444" },
-                    ]}
-                  />
-                </View>
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.emptyText}>No coach assigned</Text>
-          )}
-        </View> */}
-
         {/* RIGHT PANE */}
         <View style={styles.rightPane}>
           {loading ? (
@@ -667,11 +639,10 @@ console.log("COACH NAME" , coachProfile?.name)
             <>
               <View style={styles.chatHeader}>
                 <View>
-                  
-                 <Text style={styles.headerName}>
-  {coachProfile?.name || "Coach"}
-</Text>
-                  
+                  <Text style={styles.headerName}>
+                    {coachProfile?.name || "Coach"}
+                  </Text>
+
                   <Text style={styles.chatStatus}>
                     {onlineUsers.includes(coachProfile.coachId) ? "Online" : "Offline"}
                   </Text>
@@ -719,82 +690,81 @@ console.log("COACH NAME" , coachProfile?.name)
                         {/* Voice message */}
                         {m.type === "voice" && m.audio?.filePath ? (
                           <View style={{ marginBottom: 6 }}>
-                          <TouchableOpacity
-  onPress={async () => {
-    await playMessage(m, false);
-  }}
-  activeOpacity={0.8}
-  style={{
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: fromMe ? "#cfe8f7" : "#f1f0f0",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 18,
-    height: 40,
-    minWidth: 180,
-  }}
->
-  {/* Play Button */}
-  <TouchableOpacity
-    onPress={async () => {
-      await playMessage(m, false);
-    }}
-    style={{
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: "#ffffff",
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: 8,
-    }}
-  >
-    <Text style={{ fontSize: 13, color: "#000" }}>
-      {playingMessageId === (m._id || `${senderId}_${idx}`) ? "❚❚" : "▶"}
-    </Text>
-  </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={async () => {
+                                await playMessage(m, false);
+                              }}
+                              activeOpacity={0.8}
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                backgroundColor: fromMe ? "#cfe8f7" : "#f1f0f0",
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                                borderRadius: 18,
+                                height: 40,
+                                minWidth: 180,
+                              }}
+                            >
+                              {/* Play Button */}
+                              <TouchableOpacity
+                                onPress={async () => {
+                                  await playMessage(m, false);
+                                }}
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: "#ffffff",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  marginRight: 8,
+                                }}
+                              >
+                                <Text style={{ fontSize: 13, color: "#000" }}>
+                                  {playingMessageId === (m._id || `${senderId}_${idx}`) ? "❚❚" : "▶"}
+                                </Text>
+                              </TouchableOpacity>
 
-  {/* Progress Bar */}
-  <View style={{ flex: 1 }}>
-    <View
-      style={{
-        height: 3,
-        backgroundColor: "#ddd",
-        borderRadius: 3,
-        overflow: "hidden",
-      }}
-    >
-      <View
-        style={{
-          width:
-            playingMessageId === (m._id || `${senderId}_${idx}`) &&
-            playDuration > 0
-              ? `${(playPosition / playDuration) * 100}%`
-              : "0%",
-          height: 3,
-          backgroundColor: "#000",
-        }}
-      />
-    </View>
+                              {/* Progress Bar */}
+                              <View style={{ flex: 1 }}>
+                                <View
+                                  style={{
+                                    height: 3,
+                                    backgroundColor: "#ddd",
+                                    borderRadius: 3,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <View
+                                    style={{
+                                      width:
+                                        playingMessageId === (m._id || `${senderId}_${idx}`) &&
+                                        playDuration > 0
+                                          ? `${(playPosition / playDuration) * 100}%`
+                                          : "0%",
+                                      height: 3,
+                                      backgroundColor: "#000",
+                                    }}
+                                  />
+                                </View>
 
-    <Text
-      style={{
-        fontSize: 10,
-        color: "#777",
-        marginTop: 3,
-        textAlign: "right",
-      }}
-    >
-      {playingMessageId === (m._id || `${senderId}_${idx}`)
-        ? fmtTime(playPosition)
-        : m.audio?.duration
-        ? fmtTime(m.audio.duration)
-        : "00:00"}
-    </Text>
-  </View>
-</TouchableOpacity>
-
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    color: "#777",
+                                    marginTop: 3,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  {playingMessageId === (m._id || `${senderId}_${idx}`)
+                                    ? fmtTime(playPosition)
+                                    : m.audio?.duration
+                                    ? fmtTime(m.audio.duration)
+                                    : "00:00"}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
                           </View>
                         ) : null}
 
@@ -810,7 +780,17 @@ console.log("COACH NAME" , coachProfile?.name)
                 })}
               </ScrollView>
 
-              <View style={styles.composer}>
+              {/* ─── COMPOSER BAR ───────────────────────────────────────────────
+                  paddingBottom uses the device's safe area bottom inset so the
+                  buttons never sit behind the home indicator / navigation bar.
+                  A minimum of 12 px is kept even on devices with no inset.
+              ──────────────────────────────────────────────────────────────── */}
+              <View
+                style={[
+                  styles.composer,
+                  { paddingBottom: Math.max(insets.bottom, 12) },
+                ]}
+              >
                 <TextInput
                   style={styles.input}
                   placeholder="Type a message..."
@@ -824,7 +804,7 @@ console.log("COACH NAME" , coachProfile?.name)
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}>
                       <View style={{ width: 10, height: 10, borderRadius: 10, backgroundColor: "#FF3333", marginRight: 6 }} />
-                      <Text style={{ color: "#fff", fontWeight: "700" }}>{`Recording ${fmtTime(elapsed)}`}</Text>
+                      <Text style={{ color: "#333", fontWeight: "700" }}>{`Recording ${fmtTime(elapsed)}`}</Text>
                     </View>
 
                     <TouchableOpacity
@@ -874,7 +854,15 @@ console.log("COACH NAME" , coachProfile?.name)
                         await playMessage(fakeMsg, true);
                       }}
                     >
-                      <Text style={styles.sendBtnText}>{playingMessageId === "preview" ? (playDuration ? `${fmtTime(playPosition)}` : "Playing") : (voiceDuration ? `${voiceDuration.toFixed(1)}s` : "Play")}</Text>
+                      <Text style={styles.sendBtnText}>
+                        {playingMessageId === "preview"
+                          ? playDuration
+                            ? `${fmtTime(playPosition)}`
+                            : "Playing"
+                          : voiceDuration
+                          ? `${voiceDuration.toFixed(1)}s`
+                          : "Play"}
+                      </Text>
                     </TouchableOpacity>
                   </>
                 ) : (
@@ -919,11 +907,10 @@ const styles = StyleSheet.create({
   },
 
   container: {
-  flex: 1,
-  flexDirection: "row",
-  backgroundColor: "#ffffff",
-},
-
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
+  },
 
   /* LEFT PANE */
   leftPane: {
@@ -980,12 +967,12 @@ const styles = StyleSheet.create({
   },
 
   /* RIGHT PANE / CHAT */
- rightPane: {
-  flex: 1,
-  paddingHorizontal: 12,
-  paddingTop: 8,
-  backgroundColor: "#ffffff",
-},
+  rightPane: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    backgroundColor: "#ffffff",
+  },
 
   chatHeader: {
     flexDirection: "row",
@@ -994,9 +981,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingBottom: 12,
     marginBottom: 12,
-      borderBottomColor: "#E5E5E5",
+    borderBottomColor: "#E5E5E5",
   },
-  chatTitle: {
+  headerName: {
     color: "#000000",
     fontSize: 18,
     fontWeight: "800",
@@ -1048,20 +1035,19 @@ const styles = StyleSheet.create({
   },
 
   msgBubble: {
-  maxWidth: "80%",
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 20,
-},
-msgLeft: {
-  backgroundColor: "#f1f0f0",
-  borderTopLeftRadius: 6,
-},
-msgRight: {
-  backgroundColor: "#cfe8f7",
-  borderTopRightRadius: 6,
-},
-
+    maxWidth: "80%",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  msgLeft: {
+    backgroundColor: "#f1f0f0",
+    borderTopLeftRadius: 6,
+  },
+  msgRight: {
+    backgroundColor: "#cfe8f7",
+    borderTopRightRadius: 6,
+  },
 
   msgTextLeft: {
     color: "#000000",
@@ -1080,42 +1066,52 @@ msgRight: {
     textAlign: "right",
   },
 
- composer: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 2,
-  borderTopWidth: 1,
-  borderTopColor: "#eee",
-},
+  // NOTE: paddingBottom is applied dynamically via insets.bottom in JSX above
+  composer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",        // allows buttons to wrap on small screens
+    gap: 6,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: "#ffffff",
+  },
 
+  input: {
+    flex: 1,
+    minWidth: 120,           // prevent input from collapsing on narrow layouts
+    backgroundColor: "#f0f0f0",
+    color: "#000",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    fontSize: 14,
+    maxHeight: 100,
+  },
 
-input: {
-  flex: 1,
-  backgroundColor: "#f0f0f0",
-  color: "#000",
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 20,
-  fontSize: 14,
-  maxHeight: 100,
-},
-
-
- sendBtn: {
-  backgroundColor: "#3b7dd8",
-  paddingVertical: 10,
-  paddingHorizontal: 16,
-  borderRadius: 20,
-  marginLeft: 6,
-},
-sendBtnText: {
-  color: "#fff",
-  fontWeight: "600",
-},
-
+  sendBtn: {
+    backgroundColor: "#3b7dd8",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  sendBtnText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
 
   center: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  // kept for parity with original (chatTitle was referenced in original styles)
+  chatTitle: {
+    color: "#000000",
+    fontSize: 18,
+    fontWeight: "800",
   },
 });

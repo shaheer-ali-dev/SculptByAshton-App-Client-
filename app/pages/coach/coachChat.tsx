@@ -1,18 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
 import { Audio } from "expo-av";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useChatStore, Message } from "../../../store/useMessagingStore";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Message, useChatStore } from "../../../store/useMessagingStore";
 import api from "../../../utils/api";
 
 /**
@@ -22,6 +23,8 @@ import api from "../../../utils/api";
  * - Uses expo-router's useRouter for navigation (push to VideoCall screen).
  * - Adds Video button in the chat header to initiate a call to the selected client.
  * - Listens for incomingCall from the store and navigates to VideoCall screen as callee.
+ * - Fixed: composer bar and bottom elements now respect safe area insets so they
+ *   don't clash with the device's home indicator / back gesture bar at the bottom.
  *
  * Notes:
  * - Expects a route file at /pages/VideoCallScreen (expo-router file-based route).
@@ -30,6 +33,7 @@ import api from "../../../utils/api";
 
 export default function CoachChatScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); // ← safe area hook
 
   // store functions & state
   const initSocket = useChatStore((s) => s.initSocket);
@@ -49,7 +53,7 @@ export default function CoachChatScreen() {
   const [text, setText] = useState("");
   const [loadingConv, setLoadingConv] = useState(false);
   const [tab, setTab] = useState<"clients" | "conversations">("clients");
-  const [showChat, setShowChat] = useState(false); // false = left pane visible, true = right pane visible
+  const [showChat, setShowChat] = useState(false);
 
   const scrollRef = useRef<ScrollView | null>(null);
 
@@ -539,94 +543,52 @@ export default function CoachChatScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#ffffff" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={insets.bottom}
     >
       <View style={styles.container}>
 
         {/* LEFT PANE — hidden when chat is open */}
         {!showChat && (
-        <View style={styles.leftPane}>
-          <Text style={styles.heading}>Contacts</Text>
+          <View style={[styles.leftPane, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+            <Text style={styles.heading}>Contacts</Text>
 
-          {/* Tabs */}
-          <View style={styles.tabs}>
-            <TouchableOpacity
-              style={[styles.tabBtn, tab === "clients" && styles.tabActive]}
-              onPress={() => setTab("clients")}
-            >
-              <Text style={tab === "clients" ? styles.tabTextActive : styles.tabText}>
-                Clients
-              </Text>
-            </TouchableOpacity>
+            {/* Tabs */}
+            <View style={styles.tabs}>
+              <TouchableOpacity
+                style={[styles.tabBtn, tab === "clients" && styles.tabActive]}
+                onPress={() => setTab("clients")}
+              >
+                <Text style={tab === "clients" ? styles.tabTextActive : styles.tabText}>
+                  Clients
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.tabBtn, tab === "conversations" && styles.tabActive]}
-              onPress={() => setTab("conversations")}
-            >
-              <Text style={tab === "conversations" ? styles.tabTextActive : styles.tabText}>
-                Chats
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[styles.tabBtn, tab === "conversations" && styles.tabActive]}
+                onPress={() => setTab("conversations")}
+              >
+                <Text style={tab === "conversations" ? styles.tabTextActive : styles.tabText}>
+                  Chats
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-            {tab === "clients" &&
-              clients.map((c) => {
-                const isOnline = onlineUsers.includes(c._id);
-                const isSelected = selectedClientId === c._id;
-                return (
-                  <TouchableOpacity
-                    key={c._id}
-                    style={[styles.userCard, isSelected && styles.userSelected]}
-                    onPress={() => {
-                      setSelectedClientId(c._id);
-                      setShowChat(true);
-                      (async () => {
-                        setLoadingConv(true);
-                        try {
-                          await fetchMessages(c._id);
-                          setLoadingConv(false);
-                          setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
-                        } catch (err) {
-                          setLoadingConv(false);
-                        }
-                      })();
-                    }}
-                    activeOpacity={0.9}
-                  >
-                    <View style={styles.userRow}>
-                      <View>
-                        <Text style={styles.userName}>{c.name}</Text>
-                        <Text style={styles.userRole}>Client</Text>
-                      </View>
-                      <View style={styles.userRight}>
-                        <View
-                          style={[
-                            styles.onlineDot,
-                            { backgroundColor: isOnline ? "#4ade80" : "#444" },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-            {tab === "conversations" &&
-              (conversations.length ? (
-                conversations.map((conv) => {
-                  const client = clients.find((c) => c._id === conv.id);
-                  const isSelected = selectedClientId === conv.id;
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+              {tab === "clients" &&
+                clients.map((c) => {
+                  const isOnline = onlineUsers.includes(c._id);
+                  const isSelected = selectedClientId === c._id;
                   return (
                     <TouchableOpacity
-                      key={conv.id}
+                      key={c._id}
                       style={[styles.userCard, isSelected && styles.userSelected]}
                       onPress={() => {
-                        setSelectedClientId(conv.id);
+                        setSelectedClientId(c._id);
                         setShowChat(true);
                         (async () => {
                           setLoadingConv(true);
                           try {
-                            await fetchMessages(conv.id);
+                            await fetchMessages(c._id);
                             setLoadingConv(false);
                             setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
                           } catch (err) {
@@ -638,299 +600,351 @@ export default function CoachChatScreen() {
                     >
                       <View style={styles.userRow}>
                         <View>
-                          <Text style={styles.userName}>{client?.name || conv.id}</Text>
-                          <Text style={styles.userRole}>
-                            {conv.lastMessage?.text || "Voice message"}
-                          </Text>
+                          <Text style={styles.userName}>{c.name}</Text>
+                          <Text style={styles.userRole}>Client</Text>
+                        </View>
+                        <View style={styles.userRight}>
+                          <View
+                            style={[
+                              styles.onlineDot,
+                              { backgroundColor: isOnline ? "#4ade80" : "#444" },
+                            ]}
+                          />
                         </View>
                       </View>
                     </TouchableOpacity>
                   );
-                })
-              ) : (
-                <View style={{ padding: 12 }}>
-                  <Text style={styles.emptyText}>No conversations yet</Text>
-                </View>
-              ))}
-          </ScrollView>
-        </View>
+                })}
+
+              {tab === "conversations" &&
+                (conversations.length ? (
+                  conversations.map((conv) => {
+                    const client = clients.find((c) => c._id === conv.id);
+                    const isSelected = selectedClientId === conv.id;
+                    return (
+                      <TouchableOpacity
+                        key={conv.id}
+                        style={[styles.userCard, isSelected && styles.userSelected]}
+                        onPress={() => {
+                          setSelectedClientId(conv.id);
+                          setShowChat(true);
+                          (async () => {
+                            setLoadingConv(true);
+                            try {
+                              await fetchMessages(conv.id);
+                              setLoadingConv(false);
+                              setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
+                            } catch (err) {
+                              setLoadingConv(false);
+                            }
+                          })();
+                        }}
+                        activeOpacity={0.9}
+                      >
+                        <View style={styles.userRow}>
+                          <View>
+                            <Text style={styles.userName}>{client?.name || conv.id}</Text>
+                            <Text style={styles.userRole}>
+                              {conv.lastMessage?.text || "Voice message"}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                ) : (
+                  <View style={{ padding: 12 }}>
+                    <Text style={styles.emptyText}>No conversations yet</Text>
+                  </View>
+                ))}
+            </ScrollView>
+          </View>
         )}
 
         {/* RIGHT PANE — hidden when showChat=false */}
         {showChat && (
-        <View style={styles.rightPane}>
-          {!selectedClientId ? (
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>Select a client to start chatting</Text>
-            </View>
-          ) : loadingConv ? (
-            <View style={styles.center}>
-              <ActivityIndicator color="#000" />
-            </View>
-          ) : (
-            <>
-              {/* Chat Header */}
-              <View style={styles.chatHeader}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  {/* Back button */}
-                  <TouchableOpacity
-                    onPress={() => setShowChat(false)}
-                    style={styles.backBtn}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.backBtnText}>← Back</Text>
-                  </TouchableOpacity>
-
-                  <View>
-                    <Text style={styles.chatTitle}>
-                      {clients.find((c) => c._id === selectedClientId)?.name || "Conversation"}
-                    </Text>
-                    <Text style={styles.chatStatus}>
-                      {onlineUsers.includes(selectedClientId) ? "Online" : "Offline"}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  {/* Refresh */}
-                  <TouchableOpacity
-                    onPress={async () => {
-                      if (!selectedClientId) return;
-                      await fetchMessages(selectedClientId);
-                    }}
-                    style={styles.refreshBtn}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.refreshText}>Refresh</Text>
-                  </TouchableOpacity>
-
-                  {/* Video Call */}
-                  <TouchableOpacity
-                    onPress={initiateVideoCall}
-                    style={styles.refreshBtn}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.refreshText}>Video 📹</Text>
-                  </TouchableOpacity>
-                </View>
+          <View style={styles.rightPane}>
+            {!selectedClientId ? (
+              <View style={styles.center}>
+                <Text style={styles.emptyText}>Select a client to start chatting</Text>
               </View>
-
-              {/* Messages */}
-              <ScrollView
-                ref={(r) => (scrollRef.current = r)}
-                style={styles.messagesContainer}
-                contentContainerStyle={styles.messagesContent}
-              >
-                {convoMessages.length === 0 && (
-                  <View style={styles.noMessages}>
-                    <Text style={styles.noMessagesText}>No messages yet. Say hello 👋</Text>
-                  </View>
-                )}
-
-                {convoMessages.map((m, idx) => {
-                  const fromMe = m.sender.toString() === currentUserId;
-                  const msgId = m._id || `${m.sender}_${idx}`;
-
-                  return (
-                    <View
-                      key={msgId}
-                      style={[
-                        styles.msgWrapper,
-                        fromMe ? styles.msgWrapperRight : styles.msgWrapperLeft,
-                      ]}
+            ) : loadingConv ? (
+              <View style={styles.center}>
+                <ActivityIndicator color="#000" />
+              </View>
+            ) : (
+              <>
+                {/* Chat Header */}
+                <View style={styles.chatHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    {/* Back button */}
+                    <TouchableOpacity
+                      onPress={() => setShowChat(false)}
+                      style={styles.backBtn}
+                      activeOpacity={0.85}
                     >
-                      <View style={[styles.msgBubble, fromMe ? styles.msgRight : styles.msgLeft]}>
+                      <Text style={styles.backBtnText}>← Back</Text>
+                    </TouchableOpacity>
 
-                        {/* Voice message */}
-                        {m.type === "voice" && m.audio?.filePath ? (
-                          <View style={{ marginBottom: 6 }}>
-                            <TouchableOpacity
-                              onPress={async () => { await playMessage(m, false); }}
-                              activeOpacity={0.8}
-                              style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                backgroundColor: fromMe ? "#cfe8f7" : "#f1f0f0",
-                                paddingHorizontal: 10,
-                                paddingVertical: 6,
-                                borderRadius: 18,
-                                height: 40,
-                                minWidth: 180,
-                              }}
-                            >
-                              {/* Play button */}
+                    <View>
+                      <Text style={styles.chatTitle}>
+                        {clients.find((c) => c._id === selectedClientId)?.name || "Conversation"}
+                      </Text>
+                      <Text style={styles.chatStatus}>
+                        {onlineUsers.includes(selectedClientId) ? "Online" : "Offline"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    {/* Refresh */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (!selectedClientId) return;
+                        await fetchMessages(selectedClientId);
+                      }}
+                      style={styles.refreshBtn}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.refreshText}>Refresh</Text>
+                    </TouchableOpacity>
+
+                    {/* Video Call */}
+                    <TouchableOpacity
+                      onPress={initiateVideoCall}
+                      style={styles.refreshBtn}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.refreshText}>Video 📹</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Messages */}
+                <ScrollView
+                  ref={(r) => (scrollRef.current = r)}
+                  style={styles.messagesContainer}
+                  contentContainerStyle={styles.messagesContent}
+                >
+                  {convoMessages.length === 0 && (
+                    <View style={styles.noMessages}>
+                      <Text style={styles.noMessagesText}>No messages yet. Say hello 👋</Text>
+                    </View>
+                  )}
+
+                  {convoMessages.map((m, idx) => {
+                    const fromMe = m.sender.toString() === currentUserId;
+                    const msgId = m._id || `${m.sender}_${idx}`;
+
+                    return (
+                      <View
+                        key={msgId}
+                        style={[
+                          styles.msgWrapper,
+                          fromMe ? styles.msgWrapperRight : styles.msgWrapperLeft,
+                        ]}
+                      >
+                        <View style={[styles.msgBubble, fromMe ? styles.msgRight : styles.msgLeft]}>
+
+                          {/* Voice message */}
+                          {m.type === "voice" && m.audio?.filePath ? (
+                            <View style={{ marginBottom: 6 }}>
                               <TouchableOpacity
                                 onPress={async () => { await playMessage(m, false); }}
+                                activeOpacity={0.8}
                                 style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: 14,
-                                  backgroundColor: "#ffffff",
-                                  justifyContent: "center",
+                                  flexDirection: "row",
                                   alignItems: "center",
-                                  marginRight: 8,
+                                  backgroundColor: fromMe ? "#cfe8f7" : "#f1f0f0",
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 6,
+                                  borderRadius: 18,
+                                  height: 40,
+                                  minWidth: 180,
                                 }}
                               >
-                                <Text style={{ fontSize: 13, color: "#000" }}>
-                                  {playingMessageId === msgId ? "❚❚" : "▶"}
-                                </Text>
-                              </TouchableOpacity>
+                                {/* Play button */}
+                                <TouchableOpacity
+                                  onPress={async () => { await playMessage(m, false); }}
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 14,
+                                    backgroundColor: "#ffffff",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    marginRight: 8,
+                                  }}
+                                >
+                                  <Text style={{ fontSize: 13, color: "#000" }}>
+                                    {playingMessageId === msgId ? "❚❚" : "▶"}
+                                  </Text>
+                                </TouchableOpacity>
 
-                              {/* Progress bar */}
-                              <View style={{ flex: 1 }}>
-                                <View style={{ height: 3, backgroundColor: "#ddd", borderRadius: 3, overflow: "hidden" }}>
-                                  <View
-                                    style={{
-                                      width: playingMessageId === msgId && playDuration > 0
-                                        ? `${(playPosition / playDuration) * 100}%`
-                                        : "0%",
-                                      height: 3,
-                                      backgroundColor: "#000",
-                                    }}
-                                  />
+                                {/* Progress bar */}
+                                <View style={{ flex: 1 }}>
+                                  <View style={{ height: 3, backgroundColor: "#ddd", borderRadius: 3, overflow: "hidden" }}>
+                                    <View
+                                      style={{
+                                        width: playingMessageId === msgId && playDuration > 0
+                                          ? `${(playPosition / playDuration) * 100}%`
+                                          : "0%",
+                                        height: 3,
+                                        backgroundColor: "#000",
+                                      }}
+                                    />
+                                  </View>
+                                  <Text style={{ fontSize: 10, color: "#777", marginTop: 3, textAlign: "right" }}>
+                                    {playingMessageId === msgId
+                                      ? fmtTime(playPosition)
+                                      : m.audio?.duration
+                                      ? fmtTime(m.audio.duration)
+                                      : "00:00"}
+                                  </Text>
                                 </View>
-                                <Text style={{ fontSize: 10, color: "#777", marginTop: 3, textAlign: "right" }}>
-                                  {playingMessageId === msgId
-                                    ? fmtTime(playPosition)
-                                    : m.audio?.duration
-                                    ? fmtTime(m.audio.duration)
-                                    : "00:00"}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          </View>
-                        ) : null}
+                              </TouchableOpacity>
+                            </View>
+                          ) : null}
 
-                        {/* Text */}
-                        {m.text ? (
-                          <Text style={fromMe ? styles.msgTextRight : styles.msgTextLeft}>
-                            {m.text}
+                          {/* Text */}
+                          {m.text ? (
+                            <Text style={fromMe ? styles.msgTextRight : styles.msgTextLeft}>
+                              {m.text}
+                            </Text>
+                          ) : null}
+
+                          <Text style={styles.msgTime}>
+                            {m.createdAt
+                              ? new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                              : ""}
                           </Text>
-                        ) : null}
-
-                        <Text style={styles.msgTime}>
-                          {m.createdAt
-                            ? new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : ""}
-                        </Text>
+                        </View>
                       </View>
+                    );
+                  })}
+                </ScrollView>
+
+                {/* ─── COMPOSER BAR ────────────────────────────────────────────────
+                    paddingBottom uses the device's safe area bottom inset so the
+                    buttons never sit behind the home indicator / navigation bar.
+                    A minimum of 12 px is kept even on devices with no inset.
+                ─────────────────────────────────────────────────────────────────── */}
+                <View
+                  style={[
+                    styles.composer,
+                    { paddingBottom: Math.max(insets.bottom, 12) },
+                  ]}
+                >
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Type a message..."
+                    placeholderTextColor="#9a9a9a"
+                    value={text}
+                    onChangeText={setText}
+                    multiline
+                  />
+
+                  {isRecording ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}>
+                        <View style={{ width: 10, height: 10, borderRadius: 10, backgroundColor: "#FF3333", marginRight: 6 }} />
+                        <Text style={{ color: "#000", fontWeight: "700" }}>{`Recording ${fmtTime(elapsed)}`}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#FFAA00" }]}
+                        onPress={stopRecording}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Done</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#FF5555" }]}
+                        onPress={deleteRecording}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Cancel</Text>
+                      </TouchableOpacity>
                     </View>
-                  );
-                })}
-              </ScrollView>
+                  ) : voiceUri ? (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#1E90FF" }]}
+                        onPress={handleSendVoice}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Deliver</Text>
+                      </TouchableOpacity>
 
-              {/* Composer */}
-              <View style={styles.composer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Type a message..."
-                  placeholderTextColor="#9a9a9a"
-                  value={text}
-                  onChangeText={setText}
-                  multiline
-                />
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#FF5555" }]}
+                        onPress={deleteRecording}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Delete</Text>
+                      </TouchableOpacity>
 
-                {isRecording ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}>
-                      <View style={{ width: 10, height: 10, borderRadius: 10, backgroundColor: "#FF3333", marginRight: 6 }} />
-                      <Text style={{ color: "#000", fontWeight: "700" }}>{`Recording ${fmtTime(elapsed)}`}</Text>
-                    </View>
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#666" }]}
+                        onPress={async () => {
+                          const fakeMsg: Message = {
+                            _id: "preview",
+                            sender: currentUserId || "me",
+                            receiver: selectedClientId || "",
+                            type: "voice",
+                          } as any;
+                          if (!voiceUri) return;
+                          await playMessage(fakeMsg, true);
+                        }}
+                      >
+                        <Text style={styles.sendBtnText}>
+                          {playingMessageId === "preview"
+                            ? (playDuration ? `${fmtTime(playPosition)}` : "Playing")
+                            : (voiceDuration ? `${voiceDuration.toFixed(1)}s` : "Play")}
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.sendBtn, { backgroundColor: "#000000" }]}
+                        onPress={startRecording}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Voice 🎤</Text>
+                      </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#FFAA00" }]}
-                      onPress={stopRecording}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Done</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#FF5555" }]}
-                      onPress={deleteRecording}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Cancel</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : voiceUri ? (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#1E90FF" }]}
-                      onPress={handleSendVoice}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Deliver</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#FF5555" }]}
-                      onPress={deleteRecording}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Delete</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#666" }]}
-                      onPress={async () => {
-                        const fakeMsg: Message = {
-                          _id: "preview",
-                          sender: currentUserId || "me",
-                          receiver: selectedClientId || "",
-                          type: "voice",
-                        } as any;
-                        if (!voiceUri) return;
-                        await playMessage(fakeMsg, true);
-                      }}
-                    >
-                      <Text style={styles.sendBtnText}>
-                        {playingMessageId === "preview"
-                          ? (playDuration ? `${fmtTime(playPosition)}` : "Playing")
-                          : (voiceDuration ? `${voiceDuration.toFixed(1)}s` : "Play")}
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: "#000000" }]}
-                      onPress={startRecording}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Voice 🎤</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.sendBtn}
-                      onPress={async () => {
-                        if (!text.trim() || !selectedClientId) return;
-                        const trimmed = text.trim();
-                        setText("");
-                        try {
-                          const res = await api.post("/messages/send", {
-                            receiver: selectedClientId,
-                            text: trimmed,
-                          });
-                          const savedMessage: Message = res.data;
-                          const s = useChatStore.getState().socket;
-                          s?.emit("sendMessage", savedMessage);
-                          await fetchMessages(selectedClientId);
-                          setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-                        } catch (err: any) {
-                          console.error("Send message error:", err?.response?.data || err);
-                        }
-                      }}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={styles.sendBtnText}>Send</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </>
-          )}
-        </View>
+                      <TouchableOpacity
+                        style={styles.sendBtn}
+                        onPress={async () => {
+                          if (!text.trim() || !selectedClientId) return;
+                          const trimmed = text.trim();
+                          setText("");
+                          try {
+                            const res = await api.post("/messages/send", {
+                              receiver: selectedClientId,
+                              text: trimmed,
+                            });
+                            const savedMessage: Message = res.data;
+                            const s = useChatStore.getState().socket;
+                            s?.emit("sendMessage", savedMessage);
+                            await fetchMessages(selectedClientId);
+                            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+                          } catch (err: any) {
+                            console.error("Send message error:", err?.response?.data || err);
+                          }
+                        }}
+                        activeOpacity={0.9}
+                      >
+                        <Text style={styles.sendBtnText}>Send</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </>
+            )}
+          </View>
         )}
       </View>
     </KeyboardAvoidingView>
@@ -1132,15 +1146,21 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 
+  // NOTE: paddingBottom is applied dynamically via insets.bottom in JSX above
   composer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 2,
+    flexWrap: "wrap",
+    gap: 6,
+    paddingTop: 10,
+    paddingHorizontal: 12,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    backgroundColor: "#ffffff",
   },
   input: {
     flex: 1,
+    minWidth: 120,
     backgroundColor: "#f0f0f0",
     color: "#000",
     paddingHorizontal: 12,

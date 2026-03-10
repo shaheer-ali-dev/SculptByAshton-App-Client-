@@ -1,44 +1,54 @@
-import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker"; // ✅ works on Web, iOS, Android
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  ScrollView,
-  Platform,
-  SafeAreaView,
+  View,
   useWindowDimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { launchImageLibrary } from "react-native-image-picker";
 import { usePostStore } from "../../../store/usePostStore";
 
 export default function CreatePostScreen({ navigation }: any) {
   const createPost = usePostStore(s => s.createPost);
   const loading    = usePostStore(s => s.loading);
 
-  const [image, setImage]             = useState<any>(null);
+  const [image, setImage]             = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
 
-  /* ── Reactive dimensions (updates on window resize) ── */
   const { width } = useWindowDimensions();
-  const isWide     = width >= 640;
-  const maxW       = Math.min(width, 600);
-  const imageH     = isWide ? 340 : Math.round(width * 0.68);
+  const isWide  = width >= 640;
+  const maxW    = Math.min(width, 600);
+  const imageH  = isWide ? 340 : Math.round(width * 0.68);
 
   const pickImage = async () => {
     try {
-      const result = await launchImageLibrary({
-        mediaType: "photo",
+      // ✅ Request permissions on iOS/Android (web doesn't need this)
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission needed", "Please allow access to your photo library.");
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
-        selectionLimit: 1,
+        allowsEditing: true,
+        aspect: [1, 1], // square crop
       });
-      if (result.didCancel) return;
+
+      if (result.canceled) return;
       const asset = result.assets?.[0];
       if (!asset) return;
       setImage(asset);
@@ -53,21 +63,23 @@ export default function CreatePostScreen({ navigation }: any) {
     const formData = new FormData();
 
     if (Platform.OS === "web") {
+      // ✅ Web: fetch blob from data URI and append as File
       const response = await fetch(image.uri);
-      const blob = await response.blob();
-      const file = new File([blob], image.fileName || `photo-${Date.now()}.jpg`, {
-        type: image.type || "image/jpeg",
+      const blob     = await response.blob();
+      const file     = new File([blob], `photo-${Date.now()}.jpg`, {
+        type: image.mimeType || "image/jpeg",
       });
       formData.append("image", file);
     } else {
-      let uri = image.uri;
-      if (!uri.startsWith("file://") && Platform.OS === "android") {
-        uri = "file://" + uri;
-      }
+      // ✅ iOS / Android: append as object with uri/name/type
+      const uri = Platform.OS === "android" && !image.uri.startsWith("file://")
+        ? "file://" + image.uri
+        : image.uri;
+
       formData.append("image", {
         uri,
         name: image.fileName || `photo-${Date.now()}.jpg`,
-        type: image.type || "image/jpeg",
+        type: image.mimeType || "image/jpeg",
       } as any);
     }
 
@@ -88,9 +100,10 @@ export default function CreatePostScreen({ navigation }: any) {
 
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -99,10 +112,9 @@ export default function CreatePostScreen({ navigation }: any) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Centered constrained content ── */}
           <View style={[s.inner, { maxWidth: maxW }]}>
 
-            {/* ── Header ── */}
+            {/* Header */}
             <View style={s.topBar}>
               <TouchableOpacity onPress={() => navigation?.goBack?.()} style={s.backBtn}>
                 <Text style={s.backBtnText}>← Back</Text>
@@ -111,18 +123,14 @@ export default function CreatePostScreen({ navigation }: any) {
               <View style={{ width: 60 }} />
             </View>
 
-            {/* ── Image picker ── */}
+            {/* Image picker */}
             <TouchableOpacity
               style={[s.imagePicker, { height: imageH }]}
               onPress={pickImage}
               activeOpacity={0.88}
             >
               {image ? (
-                <Image
-                  source={{ uri: image.uri }}
-                  style={s.imagePreview}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: image.uri }} style={s.imagePreview} resizeMode="cover" />
               ) : (
                 <View style={s.imagePlaceholder}>
                   <Text style={[s.imagePlaceholderEmoji, isWide && { fontSize: 52 }]}>📷</Text>
@@ -130,8 +138,6 @@ export default function CreatePostScreen({ navigation }: any) {
                   <Text style={s.imagePlaceholderSub}>Tap to choose from your library</Text>
                 </View>
               )}
-
-              {/* Change photo chip when image selected */}
               {image && (
                 <View style={s.changePhotoChip}>
                   <Text style={s.changePhotoText}>Change photo</Text>
@@ -139,9 +145,8 @@ export default function CreatePostScreen({ navigation }: any) {
               )}
             </TouchableOpacity>
 
-            {/* ── Form card ── */}
+            {/* Form card */}
             <View style={s.card}>
-
               <Text style={s.fieldLabel}>Title</Text>
               <TextInput
                 placeholder="Give your post a title…"
@@ -163,12 +168,10 @@ export default function CreatePostScreen({ navigation }: any) {
                 multiline
                 textAlignVertical="top"
               />
-
-              {/* Character count */}
               <Text style={s.charCount}>{description.length}/500</Text>
             </View>
 
-            {/* ── Post button ── */}
+            {/* Post button */}
             <TouchableOpacity
               style={[s.postBtn, loading && s.postBtnDisabled]}
               onPress={submit}
@@ -181,12 +184,8 @@ export default function CreatePostScreen({ navigation }: any) {
               }
             </TouchableOpacity>
 
-            {/* ── Cancel ── */}
-            <TouchableOpacity
-              style={s.cancelBtn}
-              onPress={() => navigation?.goBack?.()}
-              activeOpacity={0.7}
-            >
+            {/* Cancel */}
+            <TouchableOpacity style={s.cancelBtn} onPress={() => navigation?.goBack?.()} activeOpacity={0.7}>
               <Text style={s.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
 
@@ -207,174 +206,34 @@ const GRAY300 = "#d4d4d4";
 const GRAY500 = "#737373";
 
 const s = StyleSheet.create({
-  container: { flex: 1 },
-  safe:      { flex: 1 },
+  container:   { flex: 1 },
+  safe:        { flex: 1 },
+  scrollOuter: { flexGrow: 1, alignItems: "center", paddingTop: 12, paddingBottom: 30, paddingHorizontal: 16 },
+  inner:       { width: "100%" },
 
-  /* Outer scroll centres the inner content block */
-  scrollOuter: {
-    flexGrow: 1,
-    alignItems: "center",
-    paddingTop: 12,
-    paddingBottom: 30,
-    paddingHorizontal: 16,
-  },
+  topBar:      { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20, paddingTop: 4 },
+  backBtn:     { width: 60 },
+  backBtnText: { fontSize: 14, color: GRAY500, fontWeight: "600" },
+  pageTitle:   { fontSize: 20, fontWeight: "800", color: BLACK, letterSpacing: -0.4 },
 
-  /* Inner block is width-constrained + fills available space */
-  inner: {
-    width: "100%",
-  },
-
-  /* ── TOP BAR ── */
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    paddingTop: 4,
-  },
-  backBtn: {
-    width: 60,
-  },
-  backBtnText: {
-    fontSize: 14,
-    color: GRAY500,
-    fontWeight: "600",
-    fontFamily: "System",
-  },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: BLACK,
-    letterSpacing: -0.4,
-    fontFamily: "System",
-  },
-
-  /* ── IMAGE PICKER ── */
-  imagePicker: {
-    width: "100%",
-    /* height set inline via imageH */
-    borderRadius: 20,
-    marginBottom: 16,
-    backgroundColor: "rgba(255,255,255,0.88)",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  imagePreview: {
-    width: "100%",
-    height: "100%",
-  },
-  imagePlaceholder: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
+  imagePicker: { width: "100%", borderRadius: 20, marginBottom: 16, backgroundColor: "rgba(255,255,255,0.88)", overflow: "hidden", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
+  imagePreview:{ width: "100%", height: "100%" },
+  imagePlaceholder:      { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   imagePlaceholderEmoji: { fontSize: 44, marginBottom: 4 },
-  imagePlaceholderTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: BLACK,
-    fontFamily: "System",
-  },
-  imagePlaceholderSub: {
-    fontSize: 13,
-    color: GRAY500,
-    fontFamily: "System",
-  },
-  changePhotoChip: {
-    position: "absolute",
-    bottom: 14,
-    alignSelf: "center",
-    backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  changePhotoText: {
-    color: WHITE,
-    fontSize: 13,
-    fontWeight: "600",
-    fontFamily: "System",
-  },
+  imagePlaceholderTitle: { fontSize: 17, fontWeight: "700", color: BLACK },
+  imagePlaceholderSub:   { fontSize: 13, color: GRAY500 },
+  changePhotoChip: { position: "absolute", bottom: 14, alignSelf: "center", backgroundColor: "rgba(0,0,0,0.55)", paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
+  changePhotoText: { color: WHITE, fontSize: 13, fontWeight: "600" },
 
-  /* ── FORM CARD ── */
-  card: {
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-  },
+  card:        { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 18, padding: 16, marginBottom: 14, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 10, elevation: 2 },
+  fieldLabel:  { fontSize: 11, fontWeight: "700", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6, marginTop: 2 },
+  input:       { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14, fontSize: 14, borderWidth: 1, borderColor: GRAY200 },
+  textArea:    { height: 110, paddingTop: 12, marginBottom: 4 },
+  charCount:   { fontSize: 11, color: GRAY300, textAlign: "right", marginBottom: 2 },
 
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: GRAY500,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 6,
-    marginTop: 2,
-    fontFamily: "System",
-  },
-  input: {
-    backgroundColor: GRAY100,
-    color: BLACK,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    fontSize: 14,
-    fontFamily: "System",
-    borderWidth: 1,
-    borderColor: GRAY200,
-  },
-  textArea: {
-    height: 110,
-    paddingTop: 12,
-    marginBottom: 4,
-  },
-  charCount: {
-    fontSize: 11,
-    color: GRAY300,
-    textAlign: "right",
-    fontFamily: "System",
-    marginBottom: 2,
-  },
-
-  /* ── BUTTONS ── */
-  postBtn: {
-    backgroundColor: BLACK,
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: "center",
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 4,
-  },
+  postBtn:         { backgroundColor: BLACK, paddingVertical: 15, borderRadius: 14, alignItems: "center", marginBottom: 10, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 8, elevation: 4 },
   postBtnDisabled: { opacity: 0.55 },
-  postBtnText: {
-    color: WHITE,
-    fontWeight: "800",
-    fontSize: 16,
-    fontFamily: "System",
-    letterSpacing: -0.2,
-  },
-  cancelBtn: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  cancelBtnText: {
-    color: GRAY500,
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "System",
-  },
+  postBtnText:     { color: WHITE, fontWeight: "800", fontSize: 16, letterSpacing: -0.2 },
+  cancelBtn:       { alignItems: "center", paddingVertical: 12 },
+  cancelBtnText:   { color: GRAY500, fontSize: 14, fontWeight: "600" },
 });

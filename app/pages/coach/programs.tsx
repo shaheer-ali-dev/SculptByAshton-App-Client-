@@ -1,23 +1,23 @@
+import useProgramStore, { Program } from "@/store/useProgramStore";
+import { LinearGradient } from "expo-linear-gradient";
+import { ArrowLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   ActivityIndicator,
-  StyleSheet,
   Alert,
-  SafeAreaView,
-  ScrollView,
+  FlatList,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { ChevronRight, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-react-native";
-import useProgramStore, { Program } from "@/store/useProgramStore";
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Client = {
@@ -39,7 +39,7 @@ const GRAY100 = "#f5f5f5";
 const GRAY200 = "#ebebeb";
 const GRAY300 = "#d4d4d4";
 const GRAY500 = "#737373";
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "http://sculptbyashton.com:5000";
 
 /* ─── Helpers ────────────────────────────────────────────── */
 const clientName = (c: Client) =>
@@ -259,9 +259,10 @@ export default function CoachProgramsScreen() {
   ════════════════════════════════════════════════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -499,7 +500,7 @@ export default function CoachProgramsScreen() {
                       <View key={si} style={[s.setsTableRow, si % 2 === 1 && { backgroundColor: "#fafafa" }]}>
                         <Text style={s.setsTableCell}>{si + 1}</Text>
                         <Text style={s.setsTableCell}>{s_.reps}</Text>
-                        <Text style={s.setsTableCell}>{s_.weight ?? 0} kg</Text>
+                        <Text style={s.setsTableCell}>{s_.weight ?? 0} lbs</Text>
                         <Text style={[s.setsTableCell, { flex: 2 }]}>{s_.note_client || "—"}</Text>
                         <Text style={[s.setsTableCell, { flex: 2 }]}>{s_.note_coach  || "—"}</Text>
                       </View>
@@ -516,9 +517,10 @@ export default function CoachProgramsScreen() {
         {/* ══════════════════════ PROGRAM FORM MODAL ══════════════════════ */}
         <Modal visible={showProgramForm} animationType="slide">
           <LinearGradient
-            colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-            locations={[0, 0.2, 0.5, 0.8, 1]}
-            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+            colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
             style={s.container}
           >
             <SafeAreaView style={s.safe}>
@@ -605,7 +607,7 @@ export default function CoachProgramsScreen() {
                                     <TextInput style={f.miniInput} value={String(set.reps)} keyboardType="numeric" onChangeText={v => updateSetField(ei, rgi, si, "reps", v)} placeholderTextColor="#bbb" />
                                   </View>
                                   <View style={s.setInputWrap}>
-                                    <Text style={f.miniLabel}>Weight (kg)</Text>
+                                    <Text style={f.miniLabel}>Weight (lbs)</Text>
                                     <TextInput style={f.miniInput} value={String(set.weight ?? 0)} keyboardType="numeric" onChangeText={v => updateSetField(ei, rgi, si, "weight", v)} placeholderTextColor="#bbb" />
                                   </View>
                                 </View>
@@ -773,7 +775,7 @@ const s = StyleSheet.create({
   /* PROGRAM CARD */
   programCard:       { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 },
   programCardTop:    { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 10 },
-  programCardTitle:  { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "System", flex: 1 },
+  programCardTitle:  { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", flex: 1 },
   programCardDesc:   { fontSize: 13, color: GRAY500, marginTop: 4, fontFamily: "System" },
   programCardMeta:   { flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 12 },
   programCardActions:{ flexDirection: "row", gap: 8, alignItems: "center" },
@@ -818,7 +820,7 @@ const s = StyleSheet.create({
 
   /* MODAL */
   modalHeader:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: GRAY200 },
-  modalTitle:   { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "System", flex: 1, textAlign: "center" },
+  modalTitle:   { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", flex: 1, textAlign: "center" },
   modalContent: { paddingHorizontal: 16, paddingTop: 16 },
 
   /* FORM CARD */
@@ -875,9 +877,9 @@ const m = StyleSheet.create({
 /* ─── Form field styles ──────────────────────────────────── */
 const f = StyleSheet.create({
   label:     { fontSize: 11, fontWeight: "700", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6, fontFamily: "System" },
-  input:     { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, fontFamily: "System", borderWidth: 1, borderColor: GRAY200, marginBottom: 0 },
+  input:     { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200, marginBottom: 0 },
   miniLabel: { fontSize: 10, fontWeight: "700", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4, fontFamily: "System" },
-  miniInput: { backgroundColor: WHITE, color: BLACK, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 13, fontFamily: "System", borderWidth: 1, borderColor: GRAY200 },
+  miniInput: { backgroundColor: WHITE, color: BLACK, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 13, fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200 },
   chipRow:   { flexDirection: "row", gap: 8 },
   diffChip:  { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center", backgroundColor: GRAY100, borderWidth: 1, borderColor: GRAY200 },
   diffChipOn:     { backgroundColor: BLACK, borderColor: BLACK },

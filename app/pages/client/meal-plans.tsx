@@ -1,28 +1,42 @@
 "use client";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert,
-  Image,
-  useWindowDimensions,
-} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { X, Edit2, ChevronRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronRight, Edit2, Heart, Plus, ShoppingCart, Trash2, X } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useClientMealPlanStore } from "../../../store/mealPlanStore";
+import { useFoodiesStore } from "../../../store/useFoodiesStore";
+
+const { height: SCREEN_H } = Dimensions.get("window");
 
 /* ─── constants ─────────────────────────────────────────────── */
 const WEEK_DAYS = [
   "monday","tuesday","wednesday","thursday","friday","saturday","sunday",
 ] as const;
 type DayKey = typeof WEEK_DAYS[number];
+
+/* NEW: tab type */
+type TabType = "Meals" | "Shopping" | "Favorites";
+
+const TODAY_ISO = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+})();
 
 function emptyDay() {
   return { breakfast:[] as string[], brunch:[] as string[], lunch:[] as string[], eveningSnack:[] as string[], dinner:[] as string[] };
@@ -46,31 +60,141 @@ const RECIPE_CATEGORIES = [
 export default function ClientMealPlansScreen() {
   const router = useRouter();
   const { mealPlans, loading, fetchMealPlans, updateMealPlan } = useClientMealPlanStore();
-  const [tab, setTab]               = useState<"Meals">("Meals");
+
+  /* NEW: foodies store */
+  const {
+    favoriteMeals, loadingFavorites, fetchFavorites, updateFavorites, deleteFavoriteMeal,
+    shopping, loadingShopping, fetchShopping, addShopping, updateShopping, deleteShopping,
+  } = useFoodiesStore();
+
+  /* ORIGINAL state */
+  const [tab, setTab]               = useState<TabType>("Meals"); // extended to TabType
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [editingPlan, setEditingPlan]   = useState<any>(null);
 
-  /* ── Reactive dimensions ── */
+  /* ── Reactive dimensions (ORIGINAL) ── */
   const { width } = useWindowDimensions();
   const isWide     = width >= 640;
   const maxW       = Math.min(width, 700);
-  /* Recipe card width: 42% on mobile, fixed 200 on wide */
   const recipeCardW = isWide ? 200 : width * 0.42;
 
-  useEffect(() => { fetchMealPlans(); }, [fetchMealPlans]);
+  /* NEW: Shopping state */
+  const [showShopModal, setShowShopModal] = useState(false);
+  const [editShopItem, setEditShopItem]   = useState<any>(null);
+  const [shopName, setShopName]           = useState("");
+  const [shopQty, setShopQty]             = useState("");
+  const [shopPrice, setShopPrice]         = useState("");
+  const [shopDate, setShopDate]           = useState(TODAY_ISO);
+  const [shopSaving, setShopSaving]       = useState(false);
 
+  /* NEW: Favourites state */
+  const [showAddFav, setShowAddFav]     = useState(false);
+  const [newFav, setNewFav]             = useState("");
+  const [editFavOld, setEditFavOld]     = useState<string|null>(null);
+  const [editFavNew, setEditFavNew]     = useState("");
+  const [favSaving, setFavSaving]       = useState(false);
+
+  /* ORIGINAL: fetch on mount — extended to also fetch foodies */
+  useEffect(() => {
+    fetchMealPlans();
+    fetchFavorites();
+    fetchShopping();
+  }, [fetchMealPlans]);
+
+  /* ORIGINAL: loading guard */
   if (loading && (!mealPlans || mealPlans.length === 0)) {
     return (
-      <LinearGradient colors={["#b8b5b5","#888888","#ffffff","#888888","#b8b5b5"]} locations={[0,0.2,0.5,0.8,1]} start={{x:0.5,y:0}} end={{x:0.5,y:1}} style={s.container}>
+      <LinearGradient
+        colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
+        style={s.container}
+      >
         <View style={s.center}><ActivityIndicator size="large" color="#111" /></View>
       </LinearGradient>
     );
   }
 
-  /* ── PLAN DETAIL VIEW ─────────────────────────────────────── */
+  /* ════════════════════════════════════════════════════════
+     NEW: Shopping helpers
+  ════════════════════════════════════════════════════════ */
+  const openAddShop = () => {
+    setEditShopItem(null); setShopName(""); setShopQty(""); setShopPrice(""); setShopDate(TODAY_ISO);
+    setShowShopModal(true);
+  };
+  const openEditShop = (it: any) => {
+    setEditShopItem(it); setShopName(it.item); setShopQty(it.quantity ?? "");
+    setShopPrice(it.price != null ? String(it.price) : ""); setShopDate(it.date);
+    setShowShopModal(true);
+  };
+  const saveShop = async () => {
+    if (!shopName.trim()) return Alert.alert("Required", "Enter an item name.");
+    setShopSaving(true);
+    try {
+      const payload = {
+        item: shopName.trim(),
+        quantity: shopQty.trim() || undefined,
+        price: shopPrice ? parseFloat(shopPrice) : undefined,
+        date: shopDate.trim() || TODAY_ISO,
+      };
+      if (editShopItem) await updateShopping(editShopItem._id, payload);
+      else await addShopping(payload);
+      setShowShopModal(false);
+    } catch { Alert.alert("Error", "Failed to save."); }
+    finally { setShopSaving(false); }
+  };
+  const deleteShop = (id: string) =>
+    Alert.alert("Delete", "Remove this item?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteShopping(id) },
+    ]);
+
+  /* Group shopping by date for grouped display */
+  const shopByDate = shopping.reduce((acc: Record<string, typeof shopping>, it) => {
+    (acc[it.date] || (acc[it.date] = [])).push(it); return acc;
+  }, {});
+  const sortedDates = Object.keys(shopByDate).sort((a, b) => b.localeCompare(a));
+
+  /* ════════════════════════════════════════════════════════
+     NEW: Favourites helpers
+  ════════════════════════════════════════════════════════ */
+  const addFav = async () => {
+    if (!newFav.trim()) return Alert.alert("Required", "Enter a meal name.");
+    setFavSaving(true);
+    try {
+      await updateFavorites([...favoriteMeals, newFav.trim()]);
+      setShowAddFav(false); setNewFav("");
+    } catch { Alert.alert("Error", "Failed."); }
+    finally { setFavSaving(false); }
+  };
+  const editFav = async () => {
+    if (!editFavNew.trim() || !editFavOld) return;
+    setFavSaving(true);
+    try {
+      await updateFavorites(favoriteMeals.map(m => m === editFavOld ? editFavNew.trim() : m));
+      setEditFavOld(null); setEditFavNew("");
+    } catch { Alert.alert("Error", "Failed."); }
+    finally { setFavSaving(false); }
+  };
+  const deleteFav = (meal: string) =>
+    Alert.alert("Remove", `Remove "${meal}" from favourites?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => deleteFavoriteMeal(meal) },
+    ]);
+
+  /* ════════════════════════════════════════════════════════
+     ORIGINAL: PLAN DETAIL VIEW — unchanged
+  ════════════════════════════════════════════════════════ */
   if (selectedPlan) {
     return (
-      <LinearGradient colors={["#b8b5b5","#888888","#ffffff","#888888","#b8b5b5"]} locations={[0,0.2,0.5,0.8,1]} start={{x:0.5,y:0}} end={{x:0.5,y:1}} style={s.container}>
+      <LinearGradient
+        colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
+        style={s.container}
+      >
         <View style={s.titleRow}>
           <TouchableOpacity onPress={() => setSelectedPlan(null)} style={s.backBtn}>
             <Text style={s.backText}>← Back</Text>
@@ -91,11 +215,11 @@ export default function ClientMealPlansScreen() {
             {WEEK_DAYS.map((dayKey) => {
               const d = selectedPlan.days?.[dayKey] || emptyDay();
               const meals = [
-                { label:"Breakfast 🍳",   items: d.breakfast },
-                { label:"Brunch 🥑",      items: d.brunch },
-                { label:"Lunch 🥗",       items: d.lunch },
-                { label:"Evening Snack 🍎",items: d.eveningSnack },
-                { label:"Dinner 🍽️",     items: d.dinner },
+                { label:"Breakfast 🍳",    items: d.breakfast },
+                { label:"Brunch 🥑",       items: d.brunch },
+                { label:"Lunch 🥗",        items: d.lunch },
+                { label:"Evening Snack 🍎", items: d.eveningSnack },
+                { label:"Dinner 🍽️",      items: d.dinner },
               ];
               const hasAny = meals.some(m => m.items?.length > 0);
               return (
@@ -117,6 +241,7 @@ export default function ClientMealPlansScreen() {
           </View>
         </ScrollView>
 
+        {/* ORIGINAL: Edit overlay inside detail view */}
         {editingPlan && (
           <EditClientMealPlanOverlay
             mealPlan={editingPlan}
@@ -136,23 +261,25 @@ export default function ClientMealPlansScreen() {
     );
   }
 
-  /* ── MAIN LIBRARY VIEW ────────────────────────────────────── */
+  /* ════════════════════════════════════════════════════════
+     ORIGINAL: MAIN LIBRARY VIEW — with new tabs added
+  ════════════════════════════════════════════════════════ */
   return (
     <LinearGradient
-      colors={["#b8b5b5","#888888","#ffffff","#888888","#b8b5b5"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{x:0.5, y:0}}
-      end={{x:0.5, y:1}}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
-      {/* ── PAGE TITLE ── */}
+      {/* ORIGINAL: PAGE TITLE */}
       <View style={s.headerArea}>
         <Text style={s.pageTitle}>Library</Text>
       </View>
 
-      {/* ── TABS ── */}
+      {/* ORIGINAL tabs row — extended to Meals | Shopping | Favorites */}
       <View style={s.tabRow}>
-        {(["Meals"] as const).map(t => (
+        {(["Meals", "Shopping", "Favorites"] as TabType[]).map(t => (
           <TouchableOpacity key={t} style={[s.tabBtn, tab===t && s.tabActive]} onPress={()=>setTab(t)} activeOpacity={0.8}>
             <Text style={[s.tabText, tab===t && s.tabTextActive]}>{t}</Text>
           </TouchableOpacity>
@@ -162,16 +289,43 @@ export default function ClientMealPlansScreen() {
       <ScrollView
         contentContainerStyle={[s.scrollContent, { alignItems: isWide ? "center" : undefined }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Constrained inner wrapper */}
+        {/* ORIGINAL: Constrained inner wrapper */}
         <View style={{ width: "100%", maxWidth: maxW }}>
 
-          {tab === "Meals" ? (
+          {/* ══════════════════════════════════════════════════
+              ORIGINAL MEALS TAB — completely unchanged
+          ══════════════════════════════════════════════════ */}
+          {tab === "Meals" && (
             <>
-              {/* ── RECIPE BOOK ── */}
+              {/* NEW: Quick links — Food Diary, Shopping, Favorites (like the image) */}
+              <View style={s.quickLinksCard}>
+                {[
+                  { emoji:"🛒", label:"Shopping list",  onPress: () => setTab("Shopping") },
+                  { emoji:"❤️", label:"Favorite meals", onPress: () => setTab("Favorites") },
+                ].map((link, i, arr) => (
+                  <TouchableOpacity
+                    key={link.label}
+                    style={[s.quickLinkRow, i < arr.length-1 && { borderBottomWidth:1, borderBottomColor:"#efefef" }]}
+                    onPress={link.onPress}
+                    activeOpacity={0.85}
+                  >
+                    <View style={s.quickLinkIconBg}>
+                      <Text style={{ fontSize: 20 }}>{link.emoji}</Text>
+                    </View>
+                    <Text style={s.quickLinkLabel}>{link.label}</Text>
+                    <ChevronRight size={18} color="#d0d0d0" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* ORIGINAL: RECIPE BOOK */}
               <View style={s.sectionHeader}>
                 <Text style={s.sectionTitle}>Recipe Book</Text>
-                <TouchableOpacity><Text style={s.viewAll}>View all</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/pages/client/RecipesScreen" as any)}>
+                  <Text style={s.viewAll}>View all</Text>
+                </TouchableOpacity>
               </View>
 
               <ScrollView
@@ -185,16 +339,15 @@ export default function ClientMealPlansScreen() {
                     key={cat.label}
                     style={[s.recipeCard, { width: recipeCardW }]}
                     activeOpacity={0.88}
-                    onPress={() => router.push("/pages/client/RecipesScreen")}
+                    onPress={() => router.push("/pages/client/RecipesScreen" as any)}
                   >
                     <Image source={{ uri: cat.img }} style={s.recipeImg} />
                     <Text style={s.recipeLabel}>{cat.label}</Text>
-                    <Text style={s.recipeCount}>{cat.count} Recipes</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
-              {/* ── PERSONALIZED PLANS ── */}
+              {/* ORIGINAL: PERSONALIZED PLANS */}
               <View style={[s.sectionHeader, { marginTop: 24 }]}>
                 <Text style={s.sectionTitle}>Personalized Plans</Text>
               </View>
@@ -208,11 +361,11 @@ export default function ClientMealPlansScreen() {
                   const todayKey = (["sunday","monday","tuesday","wednesday","thursday","friday","saturday"])[new Date().getDay()];
                   const todayMeals = mp.days?.[todayKey] || {};
                   const mealSlots = [
-                    { label: "🍳 Breakfast",    items: todayMeals.breakfast    || [] },
-                    { label: "🥑 Brunch",       items: todayMeals.brunch       || [] },
-                    { label: "🥗 Lunch",        items: todayMeals.lunch        || [] },
-                    { label: "🍎 Evening Snack",items: todayMeals.eveningSnack || [] },
-                    { label: "🍽️ Dinner",      items: todayMeals.dinner       || [] },
+                    { label: "🍳 Breakfast",     items: todayMeals.breakfast    || [] },
+                    { label: "🥑 Brunch",        items: todayMeals.brunch       || [] },
+                    { label: "🥗 Lunch",         items: todayMeals.lunch        || [] },
+                    { label: "🍎 Evening Snack", items: todayMeals.eveningSnack || [] },
+                    { label: "🍽️ Dinner",       items: todayMeals.dinner       || [] },
                   ].filter(slot => slot.items.length > 0);
 
                   return (
@@ -265,7 +418,7 @@ export default function ClientMealPlansScreen() {
                 })
               )}
 
-              {/* ── WEEK SUMMARY ── */}
+              {/* ORIGINAL: WEEK SUMMARY */}
               {mealPlans?.length > 0 && (
                 <>
                   <View style={[s.sectionHeader, { marginTop: 24 }]}>
@@ -288,17 +441,140 @@ export default function ClientMealPlansScreen() {
                 </>
               )}
             </>
-          ) : (
-            <View style={s.emptyCard}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>📁</Text>
-              <Text style={s.emptyText}>No files shared yet</Text>
-            </View>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              NEW: SHOPPING TAB
+          ══════════════════════════════════════════════════ */}
+          {tab === "Shopping" && (
+            <>
+              <View style={s.sectionHeader}>
+                <View>
+                  <Text style={s.sectionTitle}>Shopping List</Text>
+                  <Text style={s.sectionSub}>{shopping.length} item{shopping.length !== 1 ? "s" : ""}</Text>
+                </View>
+                <TouchableOpacity style={s.addBtn} onPress={openAddShop} activeOpacity={0.85}>
+                  <Plus size={15} color="#fff" />
+                  <Text style={s.addBtnText}>Add Item</Text>
+                </TouchableOpacity>
+              </View>
+
+              {loadingShopping ? (
+                <View style={s.centerPad}><ActivityIndicator color="#111" /></View>
+              ) : shopping.length === 0 ? (
+                <View style={s.emptyCard}>
+                  <Text style={{ fontSize: 44, marginBottom: 8 }}>🛒</Text>
+                  <Text style={s.emptyText}>Your shopping list is empty</Text>
+                  <TouchableOpacity onPress={openAddShop} style={s.emptyAction}>
+                    <Text style={s.emptyActionText}>+ Add your first item</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : sortedDates.map(date => (
+                <View key={date} style={{ marginBottom: 18 }}>
+                  {/* Date group header */}
+                  <View style={s.dateHeader}>
+                    <View style={s.dateDot} />
+                    <Text style={s.dateHeaderText}>
+                      {date === TODAY_ISO
+                        ? "Today"
+                        : new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" })
+                      }
+                    </Text>
+                    {/* Date total */}
+                    {shopByDate[date].some(i => i.price != null) && (
+                      <Text style={s.dateTotal}>
+                        ${shopByDate[date].reduce((sum, i) => sum + (i.price ?? 0), 0).toFixed(2)}
+                      </Text>
+                    )}
+                  </View>
+
+                  {shopByDate[date].map(it => (
+                    <View key={it._id} style={s.shopCard}>
+                      <View style={s.shopCardLeft}>
+                        <View style={s.shopIconWrap}>
+                          <ShoppingCart size={15} color="#111" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.shopItemName}>{it.item}</Text>
+                          <View style={{ flexDirection:"row", gap:10, marginTop:3 }}>
+                            {it.quantity && <Text style={s.shopMeta}>📦 {it.quantity}</Text>}
+                            {it.price != null && <Text style={s.shopMeta}>💰 ${it.price.toFixed(2)}</Text>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection:"row", gap:4 }}>
+                        <TouchableOpacity onPress={() => openEditShop(it)} style={s.iconBtn}>
+                          <Edit2 size={14} color="#888" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => deleteShop(it._id)} style={s.iconBtn}>
+                          <Trash2 size={14} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              NEW: FAVORITES TAB
+          ══════════════════════════════════════════════════ */}
+          {tab === "Favorites" && (
+            <>
+              <View style={s.sectionHeader}>
+                <View>
+                  <Text style={s.sectionTitle}>Favourite Meals</Text>
+                  <Text style={s.sectionSub}>{favoriteMeals.length} saved</Text>
+                </View>
+                <TouchableOpacity style={s.addBtn} onPress={() => setShowAddFav(true)} activeOpacity={0.85}>
+                  <Plus size={15} color="#fff" />
+                  <Text style={s.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {loadingFavorites ? (
+                <View style={s.centerPad}><ActivityIndicator color="#111" /></View>
+              ) : favoriteMeals.length === 0 ? (
+                <View style={s.emptyCard}>
+                  <Text style={{ fontSize: 44, marginBottom: 8 }}>❤️</Text>
+                  <Text style={s.emptyText}>No favourite meals saved yet</Text>
+                  <TouchableOpacity onPress={() => setShowAddFav(true)} style={s.emptyAction}>
+                    <Text style={s.emptyActionText}>+ Save your first favourite</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={s.favGrid}>
+                  {favoriteMeals.map((meal, i) => (
+                    <View key={i} style={s.favCard}>
+                      <View style={s.favCardBody}>
+                        <Heart size={17} color="#ef4444" fill="#ef4444" style={{ marginBottom: 7 }} />
+                        <Text style={s.favName} numberOfLines={3}>{meal}</Text>
+                      </View>
+                      <View style={s.favCardActions}>
+                        <TouchableOpacity
+                          style={s.favActionBtn}
+                          onPress={() => { setEditFavOld(meal); setEditFavNew(meal); }}
+                        >
+                          <Edit2 size={13} color="#888" />
+                        </TouchableOpacity>
+                        <View style={{ height: 1, backgroundColor: "#f0f0f0" }} />
+                        <TouchableOpacity style={s.favActionBtn} onPress={() => deleteFav(meal)}>
+                          <Trash2 size={13} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
           )}
 
           <View style={{ height: 60 }} />
         </View>
       </ScrollView>
 
+      {/* ORIGINAL: Edit overlay from main view */}
       {editingPlan && (
         <EditClientMealPlanOverlay
           mealPlan={editingPlan}
@@ -312,11 +588,101 @@ export default function ClientMealPlansScreen() {
           }}
         />
       )}
+
+      {/* ══ NEW: Shopping Add/Edit Modal ══ */}
+      <Modal visible={showShopModal} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <View style={s.overlay}>
+            <View style={s.overlayCard}>
+              <View style={s.sheetHandle} />
+              <View style={s.overlayHeader}>
+                <Text style={s.overlayTitle}>{editShopItem ? "Edit Item" : "Add to Shopping List"}</Text>
+                <TouchableOpacity onPress={() => setShowShopModal(false)} style={s.closeBtn}>
+                  <X size={20} color="#111" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={s.fieldLabel}>ITEM NAME *</Text>
+              <TextInput style={s.input} placeholder="e.g. Chicken breast" placeholderTextColor="#bbb" value={shopName} onChangeText={setShopName} autoFocus />
+
+              <View style={{ flexDirection:"row", gap:10 }}>
+                <View style={{ flex:1 }}>
+                  <Text style={s.fieldLabel}>QUANTITY</Text>
+                  <TextInput style={s.input} placeholder="e.g. 500g" placeholderTextColor="#bbb" value={shopQty} onChangeText={setShopQty} />
+                </View>
+                <View style={{ flex:1 }}>
+                  <Text style={s.fieldLabel}>PRICE ($)</Text>
+                  <TextInput style={s.input} placeholder="0.00" placeholderTextColor="#bbb" value={shopPrice} onChangeText={setShopPrice} keyboardType="numeric" />
+                </View>
+              </View>
+
+              <Text style={s.fieldLabel}>DATE</Text>
+              <TextInput style={s.input} placeholder="YYYY-MM-DD" placeholderTextColor="#bbb" value={shopDate} onChangeText={setShopDate} />
+
+              <TouchableOpacity style={[s.saveBtn, shopSaving && { opacity: 0.55 }]} onPress={saveShop} disabled={shopSaving} activeOpacity={0.88}>
+                {shopSaving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>{editShopItem ? "Save Changes" : "Add Item"}</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowShopModal(false)} style={{ marginTop:12, marginBottom:8, alignItems:"center" }}>
+                <Text style={{ color:"#aaa", fontSize:14 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ══ NEW: Add Favourite Modal ══ */}
+      <Modal visible={showAddFav} transparent animationType="slide">
+        <View style={s.overlay}>
+          <View style={s.overlayCard}>
+            <View style={s.sheetHandle} />
+            <View style={s.overlayHeader}>
+              <Text style={s.overlayTitle}>Add Favourite Meal</Text>
+              <TouchableOpacity onPress={() => setShowAddFav(false)} style={s.closeBtn}>
+                <X size={20} color="#111" />
+              </TouchableOpacity>
+            </View>
+            <Text style={s.fieldLabel}>MEAL NAME *</Text>
+            <TextInput style={s.input} placeholder="e.g. Grilled salmon with rice" placeholderTextColor="#bbb" value={newFav} onChangeText={setNewFav} autoFocus />
+            <TouchableOpacity style={[s.saveBtn, favSaving && { opacity: 0.55 }]} onPress={addFav} disabled={favSaving} activeOpacity={0.88}>
+              {favSaving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>Save Favourite</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowAddFav(false)} style={{ marginTop:12, marginBottom:8, alignItems:"center" }}>
+              <Text style={{ color:"#aaa", fontSize:14 }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ══ NEW: Edit Favourite Modal ══ */}
+      <Modal visible={!!editFavOld} transparent animationType="slide">
+        <View style={s.overlay}>
+          <View style={s.overlayCard}>
+            <View style={s.sheetHandle} />
+            <View style={s.overlayHeader}>
+              <Text style={s.overlayTitle}>Edit Favourite</Text>
+              <TouchableOpacity onPress={() => setEditFavOld(null)} style={s.closeBtn}>
+                <X size={20} color="#111" />
+              </TouchableOpacity>
+            </View>
+            <Text style={s.fieldLabel}>MEAL NAME *</Text>
+            <TextInput style={s.input} value={editFavNew} onChangeText={setEditFavNew} autoFocus />
+            <TouchableOpacity style={[s.saveBtn, favSaving && { opacity: 0.55 }]} onPress={editFav} disabled={favSaving} activeOpacity={0.88}>
+              {favSaving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>Save Changes</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setEditFavOld(null)} style={{ marginTop:12, marginBottom:8, alignItems:"center" }}>
+              <Text style={{ color:"#aaa", fontSize:14 }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </LinearGradient>
   );
 }
 
-/* ── EDIT OVERLAY ──────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   ORIGINAL: EditClientMealPlanOverlay — completely unchanged
+════════════════════════════════════════════════════════════ */
 function EditClientMealPlanOverlay({ mealPlan, onClose, updateMealPlan }: {
   mealPlan: any; onClose: () => void;
   updateMealPlan: (id: string, days: any) => Promise<void>;
@@ -371,6 +737,7 @@ function EditClientMealPlanOverlay({ mealPlan, onClose, updateMealPlan }: {
     <Modal transparent animationType="slide">
       <View style={s.overlay}>
         <View style={s.overlayCard}>
+          {/* ORIGINAL header */}
           <View style={s.overlayHeader}>
             <Text style={s.overlayTitle}>Edit Meal Plan</Text>
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
@@ -379,6 +746,7 @@ function EditClientMealPlanOverlay({ mealPlan, onClose, updateMealPlan }: {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
+            {/* ORIGINAL inputs */}
             <TextInput style={s.input} placeholder="Plan title" placeholderTextColor="#aaa" value={title} onChangeText={setTitle} />
             <TextInput style={s.input} placeholder="Description (optional)" placeholderTextColor="#aaa" value={description} onChangeText={setDesc} />
 
@@ -421,6 +789,7 @@ function EditClientMealPlanOverlay({ mealPlan, onClose, updateMealPlan }: {
 }
 
 /* ─── styles ─────────────────────────────────────────────────── */
+// ORIGINAL palette — unchanged
 const WHITE   = "#ffffff";
 const BLACK   = "#111111";
 const GRAY100 = "#f5f5f5";
@@ -431,8 +800,9 @@ const PINK    = "#848183";
 const s = StyleSheet.create({
   container: { flex: 1 },
   center: { flex:1, justifyContent:"center", alignItems:"center" },
+  centerPad: { paddingVertical: 40, alignItems: "center" }, // NEW
 
-  /* ── HEADER ── */
+  /* ── ORIGINAL: HEADER ── */
   headerArea: {
     paddingTop: 58,
     paddingBottom: 10,
@@ -440,13 +810,13 @@ const s = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 24,
+    color:WHITE,
     fontWeight: "800",
-    color: BLACK,
     letterSpacing: -0.4,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
 
-  /* ── TABS ── */
+  /* ── ORIGINAL: TABS ── */
   tabRow: {
     flexDirection: "row",
     paddingHorizontal: 20,
@@ -455,7 +825,7 @@ const s = StyleSheet.create({
   },
   tabBtn: {
     paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.45)",
   },
@@ -466,10 +836,10 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  tabText: { fontSize: 15, fontWeight: "600", color: GRAY500, fontFamily: "System" },
+  tabText: { fontSize: 14, fontWeight: "600", color: GRAY500, fontFamily: "Lato-Regular" },
   tabTextActive: { color: BLACK, fontWeight: "700" },
 
-  /* ── SCROLL ── */
+  /* ── ORIGINAL: SCROLL ── */
   scrollContent: {
     paddingTop: 0,
     paddingHorizontal: 16,
@@ -480,7 +850,32 @@ const s = StyleSheet.create({
     paddingBottom: 60,
   },
 
-  /* ── SECTION HEADERS ── */
+  /* ── NEW: QUICK LINKS (matches screenshot) ── */
+  quickLinksCard: {
+    backgroundColor: "rgba(255,255,255,0.93)",
+    borderRadius: 18,
+    marginBottom: 24,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  quickLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 17,
+    paddingHorizontal: 18,
+    gap: 14,
+  },
+  quickLinkIconBg: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: GRAY100,
+    justifyContent: "center", alignItems: "center",
+  },
+  quickLinkLabel: { flex: 1, fontSize: 16, fontWeight: "600", color: BLACK, fontFamily: "Lato-Regular" },
+
+  /* ── ORIGINAL: SECTION HEADERS ── */
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -488,16 +883,23 @@ const s = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 2,
   },
-  sectionTitle: { fontSize: 19, fontWeight: "800", color: BLACK, fontFamily: "System" },
+  sectionTitle: { fontSize: 19, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular" },
+  sectionSub:   { fontSize: 12, color: GRAY500, marginTop: 2 }, // NEW
   viewAll: { fontSize: 14, fontWeight: "500", color: GRAY500 },
 
-  /* ── RECIPE BOOK ── */
+  /* ── NEW: ADD BUTTON ── */
+  addBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: BLACK, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+  },
+  addBtnText: { fontSize: 13, fontWeight: "700", color: WHITE },
+
+  /* ── ORIGINAL: RECIPE BOOK ── */
   recipeScroll: { marginHorizontal: -16 },
   recipeCard: {
     backgroundColor: WHITE,
     borderRadius: 16,
     marginRight: 12,
-    /* width set inline via recipeCardW */
     overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.08,
@@ -506,53 +908,32 @@ const s = StyleSheet.create({
     paddingBottom: 12,
   },
   recipeImg: {
-    width: "100%",
-    height: 130,
-    borderRadius: 0,
-    marginBottom: 10,
-    resizeMode: "cover",
+    width: "100%", height: 130,
+    borderRadius: 0, marginBottom: 10, resizeMode: "cover",
   },
-  recipeLabel: { fontSize: 15, fontWeight: "700", color: BLACK, paddingHorizontal: 12, fontFamily: "System" },
+  recipeLabel: { fontSize: 15, fontWeight: "700", color: BLACK, paddingHorizontal: 12, fontFamily: "Lato-Regular" },
   recipeCount: { fontSize: 12, color: GRAY500, paddingHorizontal: 12, marginTop: 2 },
 
-  /* ── TODAY PLAN CARD ── */
+  /* ── ORIGINAL: TODAY PLAN CARD ── */
   todayPlanCard: {
     backgroundColor: "rgba(255,255,255,0.93)",
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    borderRadius: 20, padding: 16, marginBottom: 16,
+    shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
   },
-  todayPlanHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 10,
-    gap: 10,
-  },
-  todayPlanTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: BLACK,
-    fontFamily: "System",
-  },
-  todayPlanDesc: { fontSize: 12, color: GRAY500, marginTop: 2 },
-  todayBadgeRow: { marginBottom: 12 },
+  todayPlanHeader: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10, gap: 10 },
+  todayPlanTitle:  { fontSize: 17, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular" },
+  todayPlanDesc:   { fontSize: 12, color: GRAY500, marginTop: 2 },
+  todayBadgeRow:   { marginBottom: 12 },
   todayBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: PINK,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
+    alignSelf: "flex-start", backgroundColor: PINK,
+    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20,
   },
-  todayBadgeText: { fontSize: 12, fontWeight: "700", color: "#2f2e2f" },
+  todayBadgeText:  { fontSize: 12, fontWeight: "700", color: "#2f2e2f" },
   noTodayMeals: {
     fontSize: 13, color: GRAY500, fontStyle: "italic",
     marginBottom: 12, textAlign: "center", paddingVertical: 8,
   },
-  mealSlotRow: { marginBottom: 10 },
+  mealSlotRow:   { marginBottom: 10 },
   mealSlotLabel: {
     fontSize: 12, fontWeight: "700", color: GRAY500,
     marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.4,
@@ -563,41 +944,40 @@ const s = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 5,
     borderWidth: 1, borderColor: GRAY300,
   },
-  mealPillText: { fontSize: 13, color: BLACK, fontWeight: "500" },
+  mealPillText:    { fontSize: 13, color: BLACK, fontWeight: "500" },
   viewAllDaysBtn: {
     marginTop: 14, borderTopWidth: 1, borderTopColor: GRAY300,
     paddingTop: 12, alignItems: "center",
   },
   viewAllDaysText: { fontSize: 14, fontWeight: "700", color: "#6e6a6c" },
-
   editChip: {
     flexDirection: "row", alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 20, gap: 4,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 4,
   },
   editChipText: { color: WHITE, fontSize: 12, fontWeight: "600" },
 
-  /* ── WEEK SUMMARY ── */
+  /* ── ORIGINAL: WEEK SUMMARY ── */
   weekRow: {
     flexDirection: "row", alignItems: "center", marginBottom: 8,
-    backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 12,
-    padding: 10, gap: 10,
+    backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 12, padding: 10, gap: 10,
   },
-  weekDay: { width: 80, fontSize: 13, fontWeight: "600", color: BLACK, fontFamily: "System" },
-  weekBar: { flex: 1, height: 6, backgroundColor: GRAY300, borderRadius: 3, overflow: "hidden" },
+  weekDay:     { width: 80, fontSize: 13, fontWeight: "600", color: BLACK, fontFamily: "Lato-Regular" },
+  weekBar:     { flex: 1, height: 6, backgroundColor: GRAY300, borderRadius: 3, overflow: "hidden" },
   weekBarFill: { height: 6, backgroundColor: PINK, borderRadius: 3 },
-  weekCount: { width: 50, fontSize: 12, color: GRAY500, textAlign: "right" },
+  weekCount:   { width: 50, fontSize: 12, color: GRAY500, textAlign: "right" },
 
-  /* ── EMPTY ── */
+  /* ── ORIGINAL: EMPTY ── */
   emptyCard: {
     backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 18,
     padding: 32, alignItems: "center", marginTop: 12,
   },
-  emptyText: { fontSize: 15, color: GRAY500, textAlign: "center" },
+  emptyText:       { fontSize: 15, color: GRAY500, textAlign: "center" },
+  emptyAction:     { marginTop: 12, backgroundColor: BLACK, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }, // NEW
+  emptyActionText: { fontSize: 13, fontWeight: "700", color: WHITE }, // NEW
 
-  /* ── PLAN DETAIL ── */
-  backBtn: { paddingHorizontal: 16, paddingVertical: 8 },
+  /* ── ORIGINAL: PLAN DETAIL ── */
+  backBtn:  { paddingHorizontal: 16, paddingVertical: 8 },
   backText: { fontSize: 14, color: GRAY500, fontWeight: "600" },
   titleRow: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -611,31 +991,37 @@ const s = StyleSheet.create({
   },
   dayTitle: {
     fontSize: 15, fontWeight: "800", color: BLACK, marginBottom: 8,
-    textTransform: "capitalize", fontFamily: "System",
+    textTransform: "capitalize", fontFamily: "Lato-Regular",
   },
-  mealRow: { flexDirection: "row", marginBottom: 6, gap: 8 },
+  mealRow:   { flexDirection: "row", marginBottom: 6, gap: 8 },
   mealLabel: { fontSize: 12, color: GRAY500, width: 110 },
   mealItems: { fontSize: 12, color: BLACK, flex: 1 },
-  emptyDay: { fontSize: 13, color: GRAY500, fontStyle: "italic" },
+  emptyDay:  { fontSize: 13, color: GRAY500, fontStyle: "italic" },
 
-  /* ── OVERLAY / EDIT MODAL ── */
+  /* ── ORIGINAL: OVERLAY / EDIT MODAL ── */
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   overlayCard: {
     backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 20, maxHeight: "92%",
   },
+  sheetHandle: { // NEW: drag handle for new modals
+    width: 40, height: 4, borderRadius: 2, backgroundColor: "#ddd",
+    alignSelf: "center", marginBottom: 14,
+  },
   overlayHeader: {
     flexDirection: "row", justifyContent: "space-between",
     alignItems: "center", marginBottom: 16,
   },
-  overlayTitle: { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "System" },
+  overlayTitle: { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular" },
   closeBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: GRAY100, justifyContent: "center", alignItems: "center",
   },
   overlaySubheading: { fontSize: 14, fontWeight: "700", color: GRAY500, marginBottom: 12, marginTop: 4 },
-  dayEditBlock: { backgroundColor: GRAY100, borderRadius: 12, padding: 12, marginBottom: 12 },
-  dayEditLabel: { fontSize: 14, fontWeight: "700", color: BLACK, marginBottom: 8, textTransform: "capitalize" },
+  dayEditBlock:      { backgroundColor: GRAY100, borderRadius: 12, padding: 12, marginBottom: 12 },
+  dayEditLabel:      { fontSize: 14, fontWeight: "700", color: BLACK, marginBottom: 8, textTransform: "capitalize" },
+
+  // ORIGINAL input styles — unchanged
   input: {
     backgroundColor: GRAY100, color: BLACK, borderRadius: 12,
     padding: 13, marginBottom: 10, fontSize: 14,
@@ -651,4 +1037,38 @@ const s = StyleSheet.create({
     alignItems: "center", marginTop: 8,
   },
   saveBtnText: { color: WHITE, fontWeight: "700", fontSize: 15 },
+
+  // NEW: field label for new modals
+  fieldLabel: {
+    fontSize: 10, fontWeight: "800", color: GRAY500,
+    letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8,
+  },
+
+  /* ── NEW: SHOPPING styles ── */
+  dateHeader:     { flexDirection:"row", alignItems:"center", gap:8, marginBottom:10 },
+  dateDot:        { width:8, height:8, borderRadius:4, backgroundColor:BLACK },
+  dateHeaderText: { flex:1, fontSize:12, fontWeight:"800", color:BLACK, textTransform:"uppercase", letterSpacing:0.5 },
+  dateTotal:      { fontSize:12, fontWeight:"700", color:BLACK },
+  shopCard: {
+    backgroundColor:"rgba(255,255,255,0.93)", borderRadius:14, padding:14, marginBottom:8,
+    flexDirection:"row", alignItems:"center",
+    shadowColor:"#000", shadowOpacity:0.05, shadowRadius:6, elevation:1,
+  },
+  shopCardLeft:  { flexDirection:"row", alignItems:"center", flex:1, gap:12 },
+  shopIconWrap:  { width:34, height:34, borderRadius:17, backgroundColor:GRAY100, justifyContent:"center", alignItems:"center" },
+  shopItemName:  { fontSize:15, fontWeight:"700", color:BLACK },
+  shopMeta:      { fontSize:12, color:GRAY500 },
+  iconBtn:       { width:34, height:34, borderRadius:17, backgroundColor:GRAY100, justifyContent:"center", alignItems:"center" },
+
+  /* ── NEW: FAVORITES styles ── */
+  favGrid: { flexDirection:"row", flexWrap:"wrap", gap:10 },
+  favCard: {
+    backgroundColor:"rgba(255,255,255,0.93)", borderRadius:16, width:"48%",
+    overflow:"hidden", flexDirection:"row",
+    shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:2,
+  },
+  favCardBody:    { flex:1, padding:13 },
+  favName:        { fontSize:13, fontWeight:"600", color:BLACK, lineHeight:19 },
+  favCardActions: { width:36, justifyContent:"center", borderLeftWidth:1, borderLeftColor:"#efefef" },
+  favActionBtn:   { flex:1, justifyContent:"center", alignItems:"center" },
 });

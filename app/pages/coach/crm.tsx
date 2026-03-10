@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,8 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useUserCRMStore, UserCRM } from "../../../store/useUserCRMStore";
+import { UserCRM, useUserCRMStore } from "../../../store/useUserCRMStore";
 
 /* ─── role badge colors (kept from original) ─────────────────── */
 const ROLE_COLORS: Record<string, string> = {
@@ -83,7 +83,7 @@ export default function UserCRMScreen() {
     if (u.avatar) {
       return (
         <Image
-          source={{ uri: u.avatar.startsWith("http") ? u.avatar : "http://localhost:5000" + u.avatar }}
+          source={{ uri: u.avatar.startsWith("http") ? u.avatar : "http://sculptbyashton.com:5000" + u.avatar }}
           style={{ width: size, height: size, borderRadius: size / 2 }}
           resizeMode="cover"
         />
@@ -161,9 +161,10 @@ export default function UserCRMScreen() {
   /* ════════════ RENDER ════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -223,9 +224,10 @@ export default function UserCRMScreen() {
         transparent={false}
       >
         <LinearGradient
-          colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-          locations={[0,0.2,0.5,0.8,1]}
-          start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+         colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
           style={{ flex: 1 }}
         >
           <SafeAreaView style={{ flex: 1 }}>
@@ -428,7 +430,7 @@ const s = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 28, fontWeight: "800", color: BLACK,
-    letterSpacing: -0.5, fontFamily: "System",
+    letterSpacing: -0.5, fontFamily: "Lato-Regular",
   },
 
   /* SEARCH */
@@ -443,7 +445,7 @@ const s = StyleSheet.create({
   searchIcon:  { fontSize: 16, marginRight: 8, color: GRAY500 },
   searchInput: {
     flex: 1, paddingVertical: 12, fontSize: 15,
-    color: BLACK, fontFamily: "System",
+    color: BLACK, fontFamily: "Lato-Regular",
   },
 
   /* ERROR */
@@ -487,7 +489,7 @@ const s = StyleSheet.create({
   },
   backBtn:     { width: 40, justifyContent: "center" },
   backBtnText: { fontSize: 28, color: BLACK, fontWeight: "300", lineHeight: 34 },
-  modalTitle:  { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "System", flex: 1, textAlign: "center" },
+  modalTitle:  { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", flex: 1, textAlign: "center" },
   editBtn:     { padding: 6 },
   editBtnText: { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "System" },
 
@@ -515,7 +517,7 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 12, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.6,
-    marginBottom: 10, marginTop: 4, fontFamily: "System",
+    marginBottom: 10, marginTop: 4, fontFamily: "Lato-Regular",
   },
   saveBtn: {
     backgroundColor: BLACK, paddingVertical: 15,
@@ -537,17 +539,17 @@ const f = StyleSheet.create({
   label: {
     fontSize: 11, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.5,
-    marginBottom: 6, fontFamily: "System",
+    marginBottom: 6, fontFamily: "Lato-Regular",
   },
   input: {
     backgroundColor: GRAY100, color: BLACK, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 11, fontSize: 14,
-    fontFamily: "System", borderWidth: 1, borderColor: GRAY200, marginBottom: 0,
+    fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200, marginBottom: 0,
   },
   detailRow: {
     flexDirection: "row", justifyContent: "space-between",
     paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: GRAY200,
   },
-  detailLabel: { fontSize: 13, color: GRAY500, fontWeight: "600", fontFamily: "System", flex: 1 },
-  detailValue: { fontSize: 13, color: BLACK, fontFamily: "System", maxWidth: "55%", textAlign: "right" },
+  detailLabel: { fontSize: 13, color: GRAY500, fontWeight: "600", fontFamily: "Lato-Regular", flex: 1 },
+  detailValue: { fontSize: 13, color: BLACK, fontFamily: "Lato-Regular", maxWidth: "55%", textAlign: "right" },
 });

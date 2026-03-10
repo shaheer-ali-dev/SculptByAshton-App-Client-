@@ -1,24 +1,23 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-import {
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ActivityIndicator,
-  Dimensions,
-} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useAuthStore } from "../store/auth";
-import useProgramStore from "../store/useProgramStore";
 import { useClientMealPlanStore } from "../store/mealPlanStore";
+import useProgramStore from "../store/useProgramStore";
+import { useWeightStore } from "../store/useWeightstore";
 
 /* ─── constants ─────────────────────────────────────────────── */
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "http://sculptbyashton.com:5000";
 const { width: SCREEN_W } = Dimensions.get("window");
 
 /* ─── helpers ───────────────────────────────────────────────── */
@@ -51,47 +50,163 @@ const mealSlotLabel: Record<string, string> = {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   BOTTOM NAV CONFIGS
-   Client: 8 tabs (scrollable) — Overview, Chat, Activities,
-           Library, Feed, Habits, Subscription, You
-   Coach:  7 tabs (scrollable) — Dashboard, Messages, Programs,
-           Habits, CRM, Meal Plans, Profile
+   ✅ FIXED: Bottom nav routes verified against actual file paths
 ───────────────────────────────────────────────────────────── */
 const CLIENT_NAV = [
-  { emoji:"🗂️", label:"Overview",      route:"/" },
-  { emoji:"💬", label:"Chat",           route:"/pages/client/clientChat" },
-  { emoji:"❤️", label:"Activities",    route:"/pages/client/workoutScreen" },
-  { emoji:"📋", label:"Library",        route:"/pages/client/meal-plans" },
-  { emoji:"📰", label:"Feed",           route:"/pages/client/feedScreen" },
-  { emoji:"💳", label:"Subscription",   route:"/pages/client/UpgradePlanScreen" },
+  { emoji: "🗂️", label: "Overview",     route: "/" },
+  { emoji: "💬", label: "Chat",          route: "/pages/client/clientChat" },
+  { emoji: "🏋️", label: "Workout",      route: "/pages/client/workoutScreen" },
+  { emoji: "🥗", label: "Meal Plans",   route: "/pages/client/meal-plans" },
+  { emoji: "📰", label: "Feed",          route: "/pages/client/feedScreen" },
+  { emoji: "💳", label: "Subscription", route: "/pages/client/UpgradePlanScreen" },
 ];
 
 const COACH_NAV = [
-  { emoji:"🗂️", label:"Dashboard",    route:"/" },
-  { emoji:"💬", label:"Messages",      route:"/pages/coach/coachChat" },
-  { emoji:"📋", label:"Programs",      route:"/pages/coach/programs" },
-  { emoji:"✅", label:"Habits",         route:"/pages/coach/CoachHabitsScreen" },
-  { emoji:"📊", label:"CRM",            route:"/pages/coach/crm" },
-  { emoji:"🥗", label:"Meal Plans",    route:"/pages/coach/meal-plans" },
+  { emoji: "🗂️", label: "Dashboard",  route: "/" },
+  { emoji: "💬", label: "Messages",    route: "/pages/coach/coachChat" },
+  { emoji: "📋", label: "Programs",    route: "/pages/coach/programs" },
+  { emoji: "✅", label: "Habits",       route: "/pages/coach/CoachHabitsScreen" },
+  { emoji: "📊", label: "CRM",          route: "/pages/coach/crm" },
+  { emoji: "🥗", label: "Meal Plans",  route: "/pages/coach/meal-plans" },
 ];
 
-/* ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   WEIGHT CHART
+════════════════════════════════════════════════════════════ */
+const CHART_H = 90;
+
+function WeightChartCard() {
+  const { entries, stats, loading, fetchMyHistory } = useWeightStore();
+
+  useEffect(() => { fetchMyHistory(); }, []);
+
+  const display = [...entries].reverse().slice(-6);
+  const hasData = display.length >= 2;
+  const weights = display.map(e => e.weight);
+  const minW    = Math.min(...weights) - 2;
+  const maxW    = Math.max(...weights) + 2;
+  const range   = maxW - minW || 1;
+  const norm    = (w: number) => (w - minW) / range;
+
+  const chartW  = SCREEN_W - 32 - 32;
+  const BAR_GAP = 8;
+
+  const changeAbs  = stats.totalChange ?? 0;
+  const isLoss     = changeAbs < 0;
+  const isGain     = changeAbs > 0;
+  const dotColor   = isLoss ? "#22c55e" : isGain ? "#ef4444" : "#aaa";
+  const changeText = isLoss
+    ? `↓ ${Math.abs(changeAbs)} kg`
+    : isGain ? `↑ ${changeAbs} kg` : "No change";
+
+  return (
+    <View style={wc.card}>
+      <View style={wc.topRow}>
+        <View>
+          <Text style={wc.cardTitle}>Weight Progress</Text>
+          <Text style={wc.cardSub}>
+            {stats.totalEntries
+              ? `${stats.totalEntries} check-in${stats.totalEntries !== 1 ? "s" : ""} recorded`
+              : "No entries yet"}
+          </Text>
+        </View>
+        <View style={[wc.changeBadge, { backgroundColor: isLoss ? "#dcfce7" : isGain ? "#fee2e2" : "#f5f5f5" }]}>
+          <Text style={[wc.changeText, { color: dotColor }]}>{changeText}</Text>
+        </View>
+      </View>
+
+      <View style={wc.pillRow}>
+        {[
+          { label: "Starting", value: stats.starting },
+          { label: "Current",  value: stats.current,  accent: true },
+          { label: "Lowest",   value: stats.lowest },
+          { label: "Highest",  value: stats.highest },
+        ].map(({ label, value, accent }) => (
+          <View key={label} style={[wc.pill, accent && wc.pillAccent]}>
+            <Text style={wc.pillLabel}>{label}</Text>
+            <Text style={[wc.pillValue, accent && { color: "#fff" }]}>
+              {value != null ? `${value} kg` : "—"}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {loading ? (
+        <View style={wc.placeholder}><ActivityIndicator color="#111" /></View>
+      ) : !hasData ? (
+        <View style={wc.placeholder}>
+          <Text style={wc.placeholderText}>Log 2+ weigh-ins to see your chart</Text>
+        </View>
+      ) : (
+        <View style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H }}>
+            <View style={{ width: 34, height: CHART_H, justifyContent: "space-between", alignItems: "flex-end", paddingRight: 6 }}>
+              <Text style={wc.yLabel}>{Math.round(maxW)}</Text>
+              <Text style={wc.yLabel}>{Math.round((maxW + minW) / 2)}</Text>
+              <Text style={wc.yLabel}>{Math.round(minW)}</Text>
+            </View>
+            <View style={{ flex: 1, height: CHART_H, position: "relative" }}>
+              {[0, 0.5, 1].map(pct => (
+                <View key={pct} style={{ position: "absolute", left: 0, right: 0, top: CHART_H - pct * CHART_H, height: 1, backgroundColor: "#ebebeb" }} />
+              ))}
+              <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: BAR_GAP }}>
+                {display.map((entry, i) => {
+                  const barH   = Math.max(6, norm(entry.weight) * CHART_H);
+                  const isLast = i === display.length - 1;
+                  return (
+                    <View key={entry._id} style={{ flex: 1, alignItems: "center", height: CHART_H, justifyContent: "flex-end" }}>
+                      <Text style={wc.barTopLabel}>{entry.weight}</Text>
+                      <View style={{ width: "100%", height: barH, backgroundColor: isLast ? "#111" : "#d4d4d4", borderTopLeftRadius: 5, borderTopRightRadius: 5 }} />
+                    </View>
+                  );
+                })}
+              </View>
+              {display.map((entry, i) => {
+                const barH = Math.max(6, norm(entry.weight) * CHART_H);
+                const segW = (chartW - 34) / display.length;
+                const cx   = i * segW + segW / 2;
+                return (
+                  <View key={`dot-${entry._id}`} style={{ position: "absolute", left: cx - 4, bottom: barH - 4, width: 8, height: 8, borderRadius: 4, backgroundColor: i === display.length - 1 ? "#111" : "#737373", borderWidth: 2, borderColor: "#fff", zIndex: 2 }} />
+                );
+              })}
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", marginLeft: 34, marginTop: 5, gap: BAR_GAP }}>
+            {display.map((entry, i) => (
+              <View key={i} style={{ flex: 1, alignItems: "center" }}>
+                <Text style={wc.xLabel}>{entry.date.slice(5)}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <TouchableOpacity style={wc.logBtn} activeOpacity={0.85}>
+        <Text style={wc.logBtnText}>＋ Log today's weight</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   MAIN PAGE
+════════════════════════════════════════════════════════════ */
 export default function HomePage() {
-  const router = useRouter();
+  const router   = useRouter();
   const { user, loadUser } = useAuthStore();
   const { programs, getClientPrograms, loading: progLoading } = useProgramStore();
   const { mealPlans, fetchMealPlans, loading: mealLoading }   = useClientMealPlanStore();
-  const isCoach = user?.role === "coach";
+  const isCoach  = user?.role === "coach";
 
-  const [greeting, setGreeting] = useState("Hey");
+  const [greeting,  setGreeting]  = useState("Hey");
   const [activeNav, setActiveNav] = useState(0);
 
   useEffect(() => {
     loadUser();
     const h = new Date().getHours();
-    if (h < 12)       setGreeting("Good morning");
-    else if (h < 17)  setGreeting("Good afternoon");
-    else              setGreeting("Good evening");
+    if (h < 12)      setGreeting("Good morning");
+    else if (h < 17) setGreeting("Good afternoon");
+    else             setGreeting("Good evening");
   }, []);
 
   useEffect(() => {
@@ -101,7 +216,6 @@ export default function HomePage() {
     }
   }, [user?._id]);
 
-  /* derived */
   const todayKey      = getDayKey();
   const timeSlot      = getMealTimeSlot();
   const todayMeal     = mealPlans?.[0]?.days?.[todayKey];
@@ -116,47 +230,33 @@ export default function HomePage() {
   if (!user) {
     return (
       <View style={s.loadingScreen}>
-        <ActivityIndicator size="large" color="#111" />
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
 
-  /* ──────────────────────────────────────────────────────────
-     SHARED LAYOUT HELPERS
-  ────────────────────────────────────────────────────────── */
-
-  const Header = ({ sub }: { sub: string }) => {
-  console.log("Coach avatar:", avatar);
-
-  return (
+  /* ── Shared sub-components ── */
+  const Header = ({ sub }: { sub: string }) => (
     <View style={s.header}>
       <View style={s.headerLeft}>
         <Text style={s.greetingText}>{greeting},</Text>
         <Text style={s.greetingName}>{firstName}</Text>
         <Text style={s.greetingSub}>{sub}</Text>
       </View>
-
       <TouchableOpacity onPress={() => router.push(profileRoute as any)}>
         {avatar
           ? <Image source={{ uri: avatar }} style={s.avatar} />
           : (
             <View style={s.avatarFallback}>
-              <Text style={s.avatarFallbackText}>
-                {firstName?.[0]?.toUpperCase() || "U"}
-              </Text>
+              <Text style={s.avatarFallbackText}>{firstName?.[0]?.toUpperCase() || "U"}</Text>
             </View>
           )
         }
       </TouchableOpacity>
     </View>
   );
-};
 
-  /* Check-in / hero card — identical structure, different copy */
-  const HeroCard = ({ title, sub, btnText, onPress }) => {
-  console.log("Hero avatar:", avatar);
-
-  return (
+  const HeroCard = ({ title, sub, btnText, onPress }: any) => (
     <View style={s.checkinCard}>
       {avatar
         ? <Image source={{ uri: avatar }} style={s.checkinAvatar} />
@@ -171,10 +271,8 @@ export default function HomePage() {
       </TouchableOpacity>
     </View>
   );
-};
 
-  /* Quick tiles grid — reused by both */
-  const QuickGrid = ({ items }: { items: { emoji:string; label:string; route:string }[] }) => (
+  const QuickGrid = ({ items }: { items: { emoji: string; label: string; route: string }[] }) => (
     <View style={s.quickGrid}>
       {items.map(item => (
         <TouchableOpacity
@@ -190,33 +288,9 @@ export default function HomePage() {
     </View>
   );
 
-  /* Stats / Streak card — same shell */
-  const TriStatCard = ({ items }: {
-    items: [{ label:string; value:string }, { label:string; value:string }, { label:string; value:string }]
-  }) => (
-    <View style={s.streakCard}>
-      <View style={s.streakRow}>
-        {items.map((item, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <View style={s.statDivider} />}
-            <View style={s.streakItem}>
-              <Text style={s.streakLabel}>{item.label}</Text>
-              <Text style={s.streakValue}>{item.value}</Text>
-            </View>
-          </React.Fragment>
-        ))}
-      </View>
-    </View>
-  );
-
-  /* Bottom nav — same scrollable bar for both */
   const BottomNav = () => (
     <View style={s.bottomNav}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.bottomNavInner}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.bottomNavInner}>
         {navItems.map((item, i) => {
           const active = activeNav === i;
           return (
@@ -236,36 +310,38 @@ export default function HomePage() {
   );
 
   /* ════════════════════════════════════════════════════════════
-     CLIENT DASHBOARD
+     ✅ UPDATED GRADIENT: black → grey → white
   ════════════════════════════════════════════════════════════ */
+
+  /* ── CLIENT DASHBOARD ── */
   if (!isCoach) return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={s.container}
     >
       <Header sub={user?.weight
-        ? `Week ${Math.ceil((user.streak||1)/7)} of your journey`
+        ? `Week ${Math.ceil((user.streak || 1) / 7)} of your journey`
         : "Let's crush today 💪"}
       />
 
       <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* hero */}
         <HeroCard
           title="Your check-in is ready 💪"
           sub="Share your progress and latest status"
           btnText="Start check-in"
-          onPress={() => router.push("/pages/client/workoutScreen")}
+          onPress={() => router.push("/pages/client/workoutScreen" as any)}
         />
 
-        {/* today tasks */}
+        {/* ✅ FIXED: "Today's Exercise" → workoutScreen */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Today's tasks</Text>
-            <TouchableOpacity onPress={() => router.push("/pages/client/workoutScreen")}>
-              <Text style={s.sectionLink}>View planner</Text>
+            <Text style={s.sectionTitle}>Today's Exercise</Text>
+            <TouchableOpacity onPress={() => router.push("/pages/client/workoutScreen" as any)}>
+              <Text style={s.sectionLink}>View all</Text>
             </TouchableOpacity>
           </View>
           {progLoading ? (
@@ -274,11 +350,11 @@ export default function HomePage() {
             <View style={s.taskCard}>
               <View style={s.emptyTask}>
                 <View>
-                  <Text style={s.emptyTaskTitle}>No scheduled tasks</Text>
-                  <Text style={s.emptyTaskSub}>Press + to add a task</Text>
+                  <Text style={s.emptyTaskTitle}>No exercises scheduled</Text>
+                  <Text style={s.emptyTaskSub}>Your coach will assign programs here</Text>
                 </View>
-                <TouchableOpacity onPress={() => router.push("/pages/client/workoutScreen")}>
-                  <Text style={s.plusBtn}>＋</Text>
+                <TouchableOpacity onPress={() => router.push("/pages/client/workoutScreen" as any)}>
+                  <Text style={s.plusBtn}>→</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -286,7 +362,7 @@ export default function HomePage() {
             <TouchableOpacity
               key={prog._id}
               style={s.taskCard}
-              onPress={() => router.push("/pages/client/workoutScreen")}
+              onPress={() => router.push("/pages/client/workoutScreen" as any)}
               activeOpacity={0.85}
             >
               <View style={s.taskRow}>
@@ -296,9 +372,9 @@ export default function HomePage() {
                     : <Text style={s.taskEmoji}>🏋️</Text>
                   }
                 </View>
-                <View style={{ flex:1 }}>
+                <View style={{ flex: 1 }}>
                   <Text style={s.taskTitle}>{prog.title}</Text>
-                  <Text style={s.taskSub}>{prog.difficulty} · {prog.exercises?.length||0} exercises</Text>
+                  <Text style={s.taskSub}>{prog.difficulty} · {prog.exercises?.length || 0} exercises</Text>
                 </View>
                 <View style={s.taskBadge}>
                   <Text style={s.taskBadgeText}>Today</Text>
@@ -308,31 +384,19 @@ export default function HomePage() {
           ))}
         </View>
 
-        {/* weight stats */}
-        {user?.weight && (
-          <View style={s.statsCard}>
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Start</Text>
-              <Text style={s.statValue}>{user.weight} kg</Text>
-            </View>
-            <View style={s.statDivider} />
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Current</Text>
-              <Text style={s.statValue}>{user.weight} kg</Text>
-            </View>
-            <View style={s.statDivider} />
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Goal weight</Text>
-              <Text style={s.statValue}>⭐ {user.weight > 70 ? user.weight-10 : user.weight} kg</Text>
-            </View>
+        {/* Weight Chart */}
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Weight Tracking</Text>
           </View>
-        )}
+          <WeightChartCard />
+        </View>
 
-        {/* meal */}
+        {/* Meal */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionTitle}>{mealSlotLabel[timeSlot]}</Text>
-            <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans")}>
+            <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans" as any)}>
               <Text style={s.sectionLink}>View full plan</Text>
             </TouchableOpacity>
           </View>
@@ -341,66 +405,61 @@ export default function HomePage() {
           ) : mealItems.length > 0 ? (
             <View style={s.mealCard}>
               <View style={s.mealHeader}>
-                <Image
-                  source={{ uri:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=80&q=80" }}
-                  style={s.mealThumb}
-                />
-                <View style={{ flex:1, marginLeft:12 }}>
-                  <Text style={s.mealPlanName}>{mealPlanTitle||"Today's Plan"}</Text>
-                  <Text style={s.mealDay}>{todayKey.charAt(0).toUpperCase()+todayKey.slice(1)} · {mealSlotLabel[timeSlot]}</Text>
+                <Image source={{ uri: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=80&q=80" }} style={s.mealThumb} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={s.mealPlanName}>{mealPlanTitle || "Today's Plan"}</Text>
+                  <Text style={s.mealDay}>{todayKey.charAt(0).toUpperCase() + todayKey.slice(1)} · {mealSlotLabel[timeSlot]}</Text>
                 </View>
               </View>
-              {mealItems.slice(0,3).map((item:string,i:number) => (
+              {mealItems.slice(0, 3).map((item: string, i: number) => (
                 <View key={i} style={s.mealItem}>
                   <Text style={s.mealDot}>●</Text>
                   <Text style={s.mealItemText}>{item}</Text>
                 </View>
               ))}
               {mealItems.length > 3 && (
-                <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans")}>
-                  <Text style={s.mealMore}>+{mealItems.length-3} more items →</Text>
+                <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans" as any)}>
+                  <Text style={s.mealMore}>+{mealItems.length - 3} more items →</Text>
                 </TouchableOpacity>
               )}
             </View>
           ) : (
             <View style={s.mealCard}>
-              <Image
-                source={{ uri:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80" }}
-                style={s.mealEmptyImage}
-              />
+              <Image source={{ uri: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80" }} style={s.mealEmptyImage} />
               <Text style={s.emptyMealText}>
                 {!mealPlans?.length ? "No meal plan assigned yet 🥗" : `No ${timeSlot} items for today`}
               </Text>
-              <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans")}>
+              <TouchableOpacity onPress={() => router.push("/pages/client/meal-plans" as any)}>
                 <Text style={s.sectionLink}>See full meal plan →</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* quick access — includes Feed, Habits, Subscription */}
+        {/* ✅ FIXED: Quick Access — all verified routes from provided file paths */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle,{ marginBottom:12 }]}>Quick Access</Text>
+          <Text style={[s.sectionTitle, { marginBottom: 12 }]}>Quick Access</Text>
           <QuickGrid items={[
-            { emoji:"📰", label:"Feed",         route:"/pages/client/feedScreen" },
-            { emoji:"✅", label:"Habits",        route:"/pages/client/HabitsScreen" },
-            { emoji:"💳", label:"Subscription",  route:"/pages/client/UpgradePlanScreen" },
-            { emoji:"🍽️", label:"Recipes",      route:"/pages/client/RecipesScreen" },
-            { emoji:"📸", label:"Post",          route:"/pages/client/createPostScreen" },
-            { emoji:"👤", label:"You",            route:"/pages/client/profile" },
-
+            { emoji: "🏋️", label: "Workout",      route: "/pages/client/workoutScreen" },
+            { emoji: "✅", label: "Tasks",          route: "/pages/client/taskScreen" },
+            { emoji: "🥗", label: "Meal Plans",    route: "/pages/client/meal-plans" },
+            { emoji: "📰", label: "Feed",           route: "/pages/client/feedScreen" },
+            { emoji: "✅", label: "Habits",         route: "/pages/client/HabitsScreen" },
+            { emoji: "🍽️", label: "Recipes",       route: "/pages/client/RecipesScreen" },
+            { emoji: "📸", label: "Post",           route: "/pages/client/createPostScreen" },
+            { emoji: "💬", label: "Chat",           route: "/pages/client/clientChat" },
+            { emoji: "💳", label: "Subscription",  route: "/pages/client/UpgradePlanScreen" },
+            { emoji: "👤", label: "Profile",        route: "/pages/client/profile" },
           ]} />
         </View>
 
-        {/* streak */}
-        
-        <View style={{ height:110 }} />
+        <View style={{ height: 110 }} />
       </ScrollView>
 
-      {/* FAB */}
+      {/* FAB → taskScreen */}
       <TouchableOpacity
         style={s.fab}
-        onPress={() => router.push("/pages/client/workoutScreen")}
+        onPress={() => router.push("/pages/client/taskScreen" as any)}
         activeOpacity={0.85}
       >
         <Text style={s.fabText}>＋</Text>
@@ -410,187 +469,168 @@ export default function HomePage() {
     </LinearGradient>
   );
 
-  /* ════════════════════════════════════════════════════════════
-     COACH DASHBOARD  — exact same visual structure as client
-  ════════════════════════════════════════════════════════════ */
+  /* ── COACH DASHBOARD ── */
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={s.container}
     >
       <Header sub="Here's your coaching overview" />
 
       <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* hero — same card, coach copy */}
         <HeroCard
           title="Manage your clients 🏋️"
           sub="View progress, assign programs and meal plans"
           btnText="Open CRM"
-          onPress={() => router.push("/pages/coach/crm")}
+          onPress={() => router.push("/pages/coach/crm" as any)}
         />
 
-        {/* coach tools — same QuickGrid tile layout */}
+        {/* ✅ FIXED: Coach Quick Access — all verified routes */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle,{ marginBottom:12 }]}>Coach Tools</Text>
+          <Text style={[s.sectionTitle, { marginBottom: 12 }]}>Coach Tools</Text>
           <QuickGrid items={[
-            { emoji:"📋", label:"Programs",    route:"/pages/coach/programs" },
-            { emoji:"🥗", label:"Meal Plans",  route:"/pages/coach/meal-plans" },
-            { emoji:"📊", label:"CRM",          route:"/pages/coach/crm" },
-            { emoji:"💬", label:"Messages",    route:"/pages/coach/coachChat" },
-            { emoji:"✅", label:"Habits",       route:"/pages/coach/CoachHabitsScreen" },
-            { emoji:"👤", label:"Profile",      route:"/pages/coach/profile" },
+            { emoji: "📋", label: "Programs",    route: "/pages/coach/programs" },
+            { emoji: "🥗", label: "Meal Plans",  route: "/pages/coach/meal-plans" },
+            { emoji: "📊", label: "CRM",          route: "/pages/coach/crm" },
+            { emoji: "💬", label: "Messages",     route: "/pages/coach/coachChat" },
+            { emoji: "✅", label: "Habits",       route: "/pages/coach/CoachHabitsScreen" },
+            { emoji: "🍱", label: "Foodies",      route: "/pages/coach/foodiesSection" },
+            { emoji: "📖", label: "Recipes",      route: "/pages/coach/RecipesScreen" },
+            { emoji: "✅", label: "Tasks",        route: "/pages/coach/taskScreen" },
+            { emoji: "👤", label: "Profile",      route: "/pages/coach/profile" },
           ]} />
         </View>
 
-     
-
-        
-
-        <View style={{ height:110 }} />
+        <View style={{ height: 110 }} />
       </ScrollView>
-
-      {/* No FAB on coach (not needed) */}
 
       <BottomNav />
     </LinearGradient>
   );
 }
 
-/* ─── styles ─────────────────────────────────────────────────── */
-const WHITE    = "#ffffff";
-const BLACK    = "#111111";
-const GRAY100  = "#f5f5f5";
-const GRAY300  = "#d4d4d4";
-const GRAY500  = "#737373";
-const GRAY700  = "#404040";
-const PINK_FAB = "#ec4899";
+/* ════════════════════════════════════════════════════════════
+   WEIGHT CARD STYLES
+════════════════════════════════════════════════════════════ */
+const wc = StyleSheet.create({
+  card:           { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 18, padding: 16, shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 },
+  topRow:         { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+  cardTitle:      { fontSize: 15, fontWeight: "700", color: "#111" },
+  cardSub:        { fontSize: 11, color: "#737373", marginTop: 2 },
+  changeBadge:    { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  changeText:     { fontSize: 13, fontWeight: "700" },
+  pillRow:        { flexDirection: "row", gap: 6, marginBottom: 14 },
+  pill:           { flex: 1, backgroundColor: "#f5f5f5", borderRadius: 10, paddingVertical: 7, paddingHorizontal: 6, alignItems: "center", borderWidth: 1, borderColor: "#ebebeb" },
+  pillAccent:     { backgroundColor: "#111", borderColor: "#111" },
+  pillLabel:      { fontSize: 9, color: "#737373", fontWeight: "500", textTransform: "uppercase", letterSpacing: 0.3 },
+  pillValue:      { fontSize: 13, fontWeight: "700", color: "#737373", marginTop: 3 },
+  placeholder:    { height: 90, backgroundColor: "#f5f5f5", borderRadius: 12, justifyContent: "center", alignItems: "center", marginBottom: 12 },
+  placeholderText:{ fontSize: 12, color: "#737373" },
+  yLabel:         { fontSize: 9, color: "#aaa" },
+  xLabel:         { fontSize: 8, color: "#aaa", textAlign: "center" },
+  barTopLabel:    { fontSize: 8, color: "#737373", marginBottom: 2 },
+  logBtn:         { backgroundColor: "#111", paddingVertical: 11, borderRadius: 12, alignItems: "center" },
+  logBtnText:     { color: "#fff", fontWeight: "700", fontSize: 13 },
+});
+
+/* ════════════════════════════════════════════════════════════
+   MAIN STYLES
+════════════════════════════════════════════════════════════ */
+const WHITE   = "#ffffff";
+const BLACK   = "#111111";
+const GRAY100 = "#f5f5f5";
+const GRAY300 = "#d4d4d4";
+const GRAY500 = "#737373";
+const GRAY700 = "#404040";
 
 const s = StyleSheet.create({
+  loadingScreen:      { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" },
+  container:          { flex: 1 },
 
-  loadingScreen: { flex:1, justifyContent:"center", alignItems:"center", backgroundColor:WHITE },
-  container:     { flex:1, backgroundColor:"#e8e8e8" },
+  header:             { paddingTop: 54, paddingBottom: 14, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  headerLeft:         { flex: 1 },
+  greetingText:       { fontSize: 16, fontWeight: "400", color: "#ffffff", lineHeight: 21 },
+  greetingName:       { fontSize: 28, fontWeight: "700", color: "#ffffff", lineHeight: 34, letterSpacing: -0.5 },
+  greetingSub:        { fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 },
+  avatar:             { width: 56, height: 56, borderRadius: 28, borderWidth: 3, borderColor: WHITE },
+  avatarFallback:     { width: 56, height: 56, borderRadius: 28, backgroundColor: GRAY700, justifyContent: "center", alignItems: "center", borderWidth: 3, borderColor: WHITE },
+  avatarFallbackText: { color: WHITE, fontWeight: "800", fontSize: 20 },
 
-  /* ── HEADER ── */
-  header: {
-    paddingTop:54, paddingBottom:14, paddingHorizontal:22,
-    flexDirection:"row", alignItems:"center", justifyContent:"space-between",
-  },
-  headerLeft:         { flex:1 },
-  greetingText:       { fontSize:16, fontWeight:"400", color:"#1a1a1a", lineHeight:21, fontFamily:"System" },
-  greetingName:       { fontSize:28, fontWeight:"700", color:"#000", lineHeight:34, fontFamily:"System", letterSpacing:-0.5 },
-  greetingSub:        { fontSize:14, color:"#555", marginTop:2, fontFamily:"System" },
-  avatar:             { width:56, height:56, borderRadius:28, borderWidth:3, borderColor:WHITE },
-  avatarFallback:     { width:56, height:56, borderRadius:28, backgroundColor:GRAY700, justifyContent:"center", alignItems:"center", borderWidth:3, borderColor:WHITE },
-  avatarFallbackText: { color:WHITE, fontWeight:"800", fontSize:20 },
+  scroll:        { flex: 1 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 },
 
-  /* ── SCROLL ── */
-  scroll:        { flex:1 },
-  scrollContent: { paddingHorizontal:16, paddingTop:16, paddingBottom:16 },
+  checkinCard:           { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 20, paddingVertical: 22, paddingHorizontal: 20, alignItems: "center", marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 14, elevation: 3 },
+  checkinAvatar:         { width: 80, height: 80, borderRadius: 40, marginBottom: 12, borderWidth: 3, borderColor: GRAY300 },
+  checkinAvatarFallback: { backgroundColor: GRAY700, justifyContent: "center", alignItems: "center" },
+  checkinAvatarText:     { color: WHITE, fontWeight: "800", fontSize: 28 },
+  checkinTitle:          { fontSize: 16, fontWeight: "700", color: BLACK, marginBottom: 4, textAlign: "center" },
+  checkinSub:            { fontSize: 12, color: GRAY500, marginBottom: 14, textAlign: "center" },
+  checkinBtn:            { backgroundColor: GRAY100, paddingVertical: 11, borderRadius: 12, width: "100%", alignItems: "center", borderWidth: 1, borderColor: GRAY300 },
+  checkinBtnText:        { fontSize: 14, fontWeight: "600", color: BLACK },
 
-  /* ── HERO / CHECK-IN CARD ── */
-  checkinCard: {
-    backgroundColor:"rgba(255,255,255,0.92)", borderRadius:20,
-    paddingVertical:22, paddingHorizontal:20, alignItems:"center", marginBottom:16,
-    shadowColor:"#000", shadowOpacity:0.08, shadowRadius:14, elevation:3,
-  },
-  checkinAvatar:         { width:80, height:80, borderRadius:40, marginBottom:12, borderWidth:3, borderColor:GRAY300 },
-  checkinAvatarFallback: { backgroundColor:GRAY700, justifyContent:"center", alignItems:"center" },
-  checkinAvatarText:     { color:WHITE, fontWeight:"800", fontSize:28 },
-  checkinTitle:          { fontSize:16, fontWeight:"700", color:BLACK, marginBottom:4, textAlign:"center" },
-  checkinSub:            { fontSize:12, color:GRAY500, marginBottom:14, textAlign:"center" },
-  checkinBtn:            { backgroundColor:GRAY100, paddingVertical:11, borderRadius:12, width:"100%", alignItems:"center", borderWidth:1, borderColor:GRAY300 },
-  checkinBtnText:        { fontSize:14, fontWeight:"600", color:BLACK },
+  section:       { marginBottom: 16 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  sectionTitle:  { fontSize: 17, fontWeight: "800", color: BLACK },
+  sectionLink:   { fontSize: 13, fontWeight: "600", color: GRAY500 },
 
-  /* ── SECTIONS ── */
-  section:       { marginBottom:16 },
-  sectionHeader: { flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:10 },
-  sectionTitle:  { fontSize:17, fontWeight:"800", color:BLACK },
-  sectionLink:   { fontSize:13, fontWeight:"600", color:GRAY500 },
+  taskCard:       { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 1 },
+  emptyTask:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  emptyTaskTitle: { fontSize: 13, color: GRAY500, fontWeight: "500" },
+  emptyTaskSub:   { fontSize: 11, color: GRAY300, marginTop: 2 },
+  plusBtn:        { fontSize: 22, color: GRAY500 },
+  taskRow:        { flexDirection: "row", alignItems: "center", gap: 12 },
+  taskIconWrap:   { width: 40, height: 40, borderRadius: 10, backgroundColor: GRAY100, justifyContent: "center", alignItems: "center", overflow: "hidden" },
+  taskIcon:       { width: 40, height: 40, borderRadius: 10 },
+  taskEmoji:      { fontSize: 20 },
+  taskTitle:      { fontSize: 14, fontWeight: "700", color: BLACK, marginBottom: 2 },
+  taskSub:        { fontSize: 11, color: GRAY500, textTransform: "capitalize" },
+  taskBadge:      { backgroundColor: GRAY100, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  taskBadgeText:  { fontSize: 10, fontWeight: "700", color: GRAY700 },
 
-  /* ── TASK / ACTIVITY CARDS ── */
-  taskCard:      { backgroundColor:"rgba(255,255,255,0.92)", borderRadius:14, padding:14, marginBottom:8, shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:1 },
-  emptyTask:     { flexDirection:"row", justifyContent:"space-between", alignItems:"center" },
-  emptyTaskTitle:{ fontSize:13, color:GRAY500, fontWeight:"500" },
-  emptyTaskSub:  { fontSize:11, color:GRAY300, marginTop:2 },
-  plusBtn:       { fontSize:26, color:GRAY300 },
-  taskRow:       { flexDirection:"row", alignItems:"center", gap:12 },
-  taskIconWrap:  { width:40, height:40, borderRadius:10, backgroundColor:GRAY100, justifyContent:"center", alignItems:"center", overflow:"hidden" },
-  taskIcon:      { width:40, height:40, borderRadius:10 },
-  taskEmoji:     { fontSize:20 },
-  taskTitle:     { fontSize:14, fontWeight:"700", color:BLACK, marginBottom:2 },
-  taskSub:       { fontSize:11, color:GRAY500, textTransform:"capitalize" },
-  taskBadge:     { backgroundColor:GRAY100, paddingHorizontal:8, paddingVertical:3, borderRadius:20 },
-  taskBadgeText: { fontSize:10, fontWeight:"700", color:GRAY700 },
+  mealCard:       { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 14, padding: 14, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 1 },
+  mealHeader:     { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  mealThumb:      { width: 46, height: 46, borderRadius: 10 },
+  mealPlanName:   { fontSize: 14, fontWeight: "700", color: BLACK, marginBottom: 2 },
+  mealDay:        { fontSize: 11, color: GRAY500 },
+  mealItem:       { flexDirection: "row", alignItems: "center", marginBottom: 5, gap: 8 },
+  mealDot:        { color: GRAY500, fontSize: 7 },
+  mealItemText:   { fontSize: 13, color: GRAY700 },
+  mealMore:       { fontSize: 12, color: GRAY500, fontWeight: "600", marginTop: 4 },
+  mealEmptyImage: { width: "100%", height: 90, borderRadius: 10, marginBottom: 10 },
+  emptyMealText:  { textAlign: "center", color: GRAY500, fontSize: 13, marginBottom: 8 },
 
-  /* ── WEIGHT STATS ── */
-  statsCard:   { backgroundColor:"rgba(255,255,255,0.92)", borderRadius:14, padding:16, flexDirection:"row", justifyContent:"space-around", alignItems:"center", marginBottom:16, shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:1 },
-  statItem:    { alignItems:"center" },
-  statLabel:   { fontSize:11, color:GRAY500, marginBottom:4, fontWeight:"500" },
-  statValue:   { fontSize:16, fontWeight:"800", color:BLACK },
-  statDivider: { width:1, height:30, backgroundColor:GRAY300 },
-
-  /* ── MEAL CARD ── */
-  mealCard:      { backgroundColor:"rgba(255,255,255,0.92)", borderRadius:14, padding:14, shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:1 },
-  mealHeader:    { flexDirection:"row", alignItems:"center", marginBottom:10 },
-  mealThumb:     { width:46, height:46, borderRadius:10 },
-  mealPlanName:  { fontSize:14, fontWeight:"700", color:BLACK, marginBottom:2 },
-  mealDay:       { fontSize:11, color:GRAY500 },
-  mealItem:      { flexDirection:"row", alignItems:"center", marginBottom:5, gap:8 },
-  mealDot:       { color:GRAY500, fontSize:7 },
-  mealItemText:  { fontSize:13, color:GRAY700 },
-  mealMore:      { fontSize:12, color:GRAY500, fontWeight:"600", marginTop:4 },
-  mealEmptyImage:{ width:"100%", height:90, borderRadius:10, marginBottom:10 },
-  emptyMealText: { textAlign:"center", color:GRAY500, fontSize:13, marginBottom:8 },
-
-  /* ── QUICK TILES GRID ── */
-  quickGrid: { flexDirection:"row", flexWrap:"wrap", gap:10 },
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   quickTile: {
-    backgroundColor:"rgba(255,255,255,0.92)",
-    borderRadius:14,
-    width:(SCREEN_W - 32 - 20) / 3,
-    paddingVertical:16, alignItems:"center", justifyContent:"center",
-    shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:1, gap:6,
+    flexBasis: "18.5%",
+    flexGrow: 0,
+    flexShrink: 0,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+    gap: 3,
   },
-  quickTileEmoji: { fontSize:22 },
-  quickTileLabel: { fontSize:11, fontWeight:"700", color:GRAY700 },
+  quickTileEmoji: { fontSize: 15 },
+  quickTileLabel: { fontSize: 9, fontWeight: "400", color: GRAY700, textAlign: "center" },
 
-  /* ── STREAK / STAT CARD ── */
-  streakCard:  { backgroundColor:"rgba(255,255,255,0.92)", borderRadius:14, padding:16, marginBottom:8, shadowColor:"#000", shadowOpacity:0.06, shadowRadius:8, elevation:1 },
-  streakRow:   { flexDirection:"row", justifyContent:"space-around", alignItems:"center" },
-  streakItem:  { alignItems:"center" },
-  streakLabel: { fontSize:11, color:GRAY500, textAlign:"center", marginBottom:4, fontWeight:"500" },
-  streakValue: { fontSize:15, fontWeight:"800", color:BLACK, textAlign:"center" },
+  fab:     { position: "absolute", bottom: 80, alignSelf: "center", width: 50, height: 50, borderRadius: 25, backgroundColor: BLACK, justifyContent: "center", alignItems: "center", shadowColor: BLACK, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8, zIndex: 20 },
+  fabText: { color: WHITE, fontSize: 26, fontWeight: "300", lineHeight: 32 },
 
-  /* ── FAB ── */
-  fab: {
-    position:"absolute", bottom:80, alignSelf:"center",
-    width:50, height:50, borderRadius:25,
-    backgroundColor:BLACK,
-    justifyContent:"center", alignItems:"center",
-    shadowColor:BLACK, shadowOpacity:0.4, shadowRadius:10, elevation:8, zIndex:20,
-  },
-  fabText: { color:WHITE, fontSize:26, fontWeight:"300", lineHeight:32 },
-
-  /* ── BOTTOM NAV — horizontal scroll ── */
-  bottomNav: {
-    backgroundColor:"rgba(255,255,255,0.97)",
-    borderTopWidth:1, borderTopColor:"rgba(0,0,0,0.08)",
-    paddingTop:8, paddingBottom:24,
-  },
-  bottomNavInner: { paddingHorizontal:6, gap:2 ,flexDirection: "row",
-  justifyContent: "space-around",
-  alignItems: "center",
-  flexGrow: 1,},
-  navItem: {
-    alignItems:"center", justifyContent:"center",
-    paddingVertical:4, paddingHorizontal:11, gap:2,
-    minWidth:62,
-  },
-  navEmoji:       { fontSize:19, opacity:0.35 },
-  navEmojiActive: { opacity:1 },
-  navLabel:       { fontSize:10, color:GRAY500, fontWeight:"500" },
-  navLabelActive: { color:BLACK, fontWeight:"700" },
+  bottomNav:      { backgroundColor: "rgba(255,255,255,0.97)", borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.08)", paddingTop: 8, paddingBottom: 24 },
+  bottomNavInner: { paddingHorizontal: 6, gap: 2, flexDirection: "row", justifyContent: "space-around", alignItems: "center", flexGrow: 1 },
+  navItem:        { alignItems: "center", justifyContent: "center", paddingVertical: 4, paddingHorizontal: 11, gap: 2, minWidth: 62 },
+  navEmoji:       { fontSize: 19, opacity: 0.35 },
+  navEmojiActive: { opacity: 1 },
+  navLabel:       { fontSize: 10, color: GRAY500, fontWeight: "500" },
+  navLabelActive: { color: BLACK, fontWeight: "700" },
 });

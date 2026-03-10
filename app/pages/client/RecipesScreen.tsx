@@ -152,9 +152,10 @@ export default function RecipesScreen() {
 
   return (
     <LinearGradient
-      colors={["#b2afb1","#f7f7f7","#ffffff","#f7f7f7","#b2afb1"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       {/* ── TOP BAR ── */}
@@ -359,9 +360,10 @@ function RecipeDetailView({
 
   return (
     <LinearGradient
-      colors={["#f9a8d4","#fce7f3","#ffffff","#fce7f3","#f9a8d4"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       {/* Hero image */}
@@ -501,7 +503,7 @@ const s = StyleSheet.create({
   },
   backBtn:     { width: 36, height: 36, justifyContent: "center" },
   backBtnText: { fontSize: 28, color: BLACK, fontWeight: "300", lineHeight: 34 },
-  pageTitle:   { flex: 1, textAlign: "center", fontSize: 24, fontWeight: "800", color: BLACK, fontFamily: "System", letterSpacing: -0.4 },
+  pageTitle:   { flex: 1, textAlign: "center", fontSize: 24, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", letterSpacing: -0.4 },
   countBadge:  { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.9)", justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
   countBadgeText: { fontSize: 13, fontWeight: "800", color: BLACK },
 
@@ -559,7 +561,7 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: "rgba(0,0,0,0.1)",
   },
   overviewTileEmoji:     { fontSize: 28, marginBottom: 6 },
-  overviewTileLabel:     { fontSize: 15, fontWeight: "800", color: BLACK, fontFamily: "System", marginBottom: 2 },
+  overviewTileLabel:     { fontSize: 15, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 2 },
   overviewTileCount:     { fontSize: 12, color: GRAY500, fontFamily: "System" },
   overviewTileActiveDot: { position: "absolute", top: 12, right: 12, width: 10, height: 10, borderRadius: 5, backgroundColor: BLACK },
 
@@ -574,8 +576,8 @@ const s = StyleSheet.create({
   recipeCardBody: { flex: 1, padding: 12 },
   recipeCardBadge:{ alignSelf: "flex-start", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 5 },
   recipeCardBadgeText: { fontSize: 11, fontWeight: "700", color: BLACK },
-  recipeCardTitle:     { fontSize: 15, fontWeight: "800", color: BLACK, fontFamily: "System", marginBottom: 3, lineHeight: 20 },
-  recipeCardDesc:      { fontSize: 12, color: GRAY500, fontFamily: "System", lineHeight: 17, marginBottom: 6 },
+  recipeCardTitle:     { fontSize: 15, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 3, lineHeight: 20 },
+  recipeCardDesc:      { fontSize: 12, color: GRAY500, fontFamily: "Lato-Regular", lineHeight: 17, marginBottom: 6 },
   recipeCardMeta:      { flexDirection: "row", alignItems: "center", gap: 10 },
   recipeCardIngCount:  { fontSize: 11, color: GRAY500 },
   recipeCardCoach:     { fontSize: 11, color: GRAY500, flex: 1, textAlign: "right" },
@@ -608,7 +610,7 @@ const d = StyleSheet.create({
   heroCatText:  { fontSize: 12, fontWeight: "700", color: BLACK },
 
   heroTitleWrap: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 24 },
-  heroTitle:  { fontSize: 26, fontWeight: "800", color: WHITE, fontFamily: "System", letterSpacing: -0.5, lineHeight: 30 },
+  heroTitle:  { fontSize: 26, fontWeight: "800", color: WHITE, fontFamily: "Lato-Regular", letterSpacing: -0.5, lineHeight: 30 },
   heroCoach:  { fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 4 },
 
   sheet: {
@@ -632,7 +634,7 @@ const d = StyleSheet.create({
 
   description: {
     fontSize: 14, color: WHITE, lineHeight: 21,
-    fontFamily: "System", marginBottom: 14,
+    fontFamily: "Lato-Regular", marginBottom: 14,
     backgroundColor: "rgba(255,255,255,0.8)",
     borderRadius: 14, padding: 14,
   },
@@ -661,7 +663,7 @@ const d = StyleSheet.create({
   },
   ingredientBullet: { width: 32, height: 32, borderRadius: 16, backgroundColor: BLACK, justifyContent: "center", alignItems: "center" },
   ingredientBulletText: { color: WHITE, fontWeight: "800", fontSize: 13 },
-  ingredientName:       { fontSize: 14, fontWeight: "700", color: BLACK, fontFamily: "System", marginBottom: 2 },
+  ingredientName:       { fontSize: 14, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 2 },
   ingredientQty:        { fontSize: 12, color: GRAY500, fontFamily: "System" },
   amountBarWrap: { width: 64, height: 6, backgroundColor: GRAY200, borderRadius: 3, overflow: "hidden" },
   amountBar:     { height: 6, borderRadius: 3 },
@@ -683,6 +685,6 @@ const d = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
   stepTitle: { fontSize: 11, fontWeight: "800", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 5 },
-  stepText:  { fontSize: 14, color: BLACK, fontFamily: "System", lineHeight: 20 },
+  stepText:  { fontSize: 14, color: BLACK, fontFamily: "Lato-Regular", lineHeight: 20 },
   emptyText: { fontSize: 14, color: GRAY500, textAlign: "center", paddingVertical: 24 },
 });

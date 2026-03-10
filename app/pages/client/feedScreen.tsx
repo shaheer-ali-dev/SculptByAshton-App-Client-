@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  FlatList,
   ActivityIndicator,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
+  FlatList,
   Image,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
   ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
   useWindowDimensions,
+  View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
-import { usePostStore, Post } from "../../../store/usePostStore";
+import { Post, usePostStore } from "../../../store/usePostStore";
 import PostItem from "./postItem";
-import { useRouter } from "expo-router";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "http://sculptbyashton.com:5000";
 
 /* ── build full image URL from imageUrl field ─────────────── */
 const buildImageUri = (imageUrl?: string) => {
@@ -154,9 +154,10 @@ export default function FeedScreen() {
   if (loading && posts.length === 0) {
     return (
       <LinearGradient
-        colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-        locations={[0,0.2,0.5,0.8,1]}
-        start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+       colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
         style={s.container}
       >
         <View style={s.center}>
@@ -168,9 +169,10 @@ export default function FeedScreen() {
 
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -256,7 +258,7 @@ const s = StyleSheet.create({
     fontWeight: "800",
     color: BLACK,
     letterSpacing: -0.5,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
   newPostBtn: {
     backgroundColor: BLACK,
@@ -268,7 +270,7 @@ const s = StyleSheet.create({
     color: WHITE,
     fontWeight: "700",
     fontSize: 13,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
 
   separator:   { height: 1, backgroundColor: GRAY200 },
@@ -352,13 +354,13 @@ const m = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: BLACK,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
   postTime: {
     fontSize: 12,
     color: GRAY500,
     marginTop: 2,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
   likesBadge: {
     backgroundColor: "#fff0f3",
@@ -378,7 +380,7 @@ const m = StyleSheet.create({
     fontWeight: "800",
     color: BLACK,
     letterSpacing: -0.4,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
     marginBottom: 10,
     lineHeight: 28,
   },
@@ -388,6 +390,6 @@ const m = StyleSheet.create({
     fontSize: 15,
     color: "#333333",
     lineHeight: 24,
-    fontFamily: "System",
+    fontFamily: "Lato-Regular",
   },
 });

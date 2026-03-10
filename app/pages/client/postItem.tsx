@@ -1,10 +1,9 @@
-import React from "react";
 import {
-  View,
-  Text,
   Image,
   StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { Post } from "../../../store/usePostStore";
 
@@ -16,7 +15,7 @@ interface Props {
 }
 
 // Change BASE_URL according to your setup
-const BASE_URL = "http://localhost:5000"; // Android emulator
+const BASE_URL = "http://sculptbyashton.com:5000"; // Android emulator
 // For real device: replace with PC IP
 
 export default function PostItem({ post, onPress, thumbnail = true }: Props) {

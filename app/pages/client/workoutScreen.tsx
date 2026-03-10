@@ -1,22 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  StyleSheet,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  Image,
-  useWindowDimensions,
-} from "react-native";
+import useProgramStore, { Program } from "@/store/useProgramStore";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import useProgramStore, { Program } from "@/store/useProgramStore";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "http://sculptbyashton.com:5000";
 
 /* ─── types (unchanged) ──────────────────────────────────────── */
 type LocalSet = {
@@ -183,10 +183,10 @@ export default function ClientProgramsScreen() {
             const n = parseFloat(v || "0");
             updateSet(exerciseId, s.setIndex, { weight: isNaN(n) ? 0 : n });
           }}
-          placeholder="kg"
+          placeholder="lbs"
           placeholderTextColor="#bbb"
         />
-        <Text>Kg Weight</Text>
+        <Text>lbs Weight</Text>
       </View>
 
       {/* Note input */}
@@ -213,7 +213,7 @@ export default function ClientProgramsScreen() {
     </View>
   );
 
-  const renderExercise = ({ item }: { item: any }) => {
+const renderExercise = ({ item }: { item: any }) => {
     const localEx = localExercises.find(le => le.exerciseId === String(item._id));
     const sets = localEx?.sets || (item.sets || []).map((s: any, idx: number) => ({
       setIndex: idx, plannedReps: s.reps ?? 0, weight: 0,
@@ -221,7 +221,7 @@ export default function ClientProgramsScreen() {
     }));
     const allDone = sets.length > 0 && sets.every((s: LocalSet) => s.completed);
     return (
-      <View style={st.exerciseCard}>
+    <View key={item._id} style={st.exerciseCard}>
         <View style={st.exerciseHeader}>
           <View style={st.exerciseDot} />
           <Text style={st.exerciseTitle}>{item.name}</Text>
@@ -235,9 +235,10 @@ export default function ClientProgramsScreen() {
   /* ════════════ RENDER ════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6","#f0f0f0","#ffffff","#f0f0f0","#d6d6d6"]}
-      locations={[0,0.2,0.5,0.8,1]}
-      start={{x:0.5,y:0}} end={{x:0.5,y:1}}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={st.container}
     >
       <SafeAreaView style={st.safe}>
@@ -371,10 +372,11 @@ export default function ClientProgramsScreen() {
                       Exercises · {selectedProgram.exercises?.length || 0}
                     </Text>
 
-                    {(selectedProgram.exercises || []).map((ex: any) =>
-                      renderExercise({ item: ex })
-                    )}
-
+                   {(selectedProgram.exercises || []).map((ex: any) => (
+  <View key={ex._id || ex.name}>
+    {renderExercise({ item: ex })}
+  </View>
+))}
                     <TouchableOpacity
                       style={[st.saveBtn, saving && st.saveBtnDisabled]}
                       onPress={handleSaveProgress}
@@ -415,7 +417,7 @@ const st = StyleSheet.create({
 
   pageTitle: {
     fontSize: 28, fontWeight: "800", color: BLACK,
-    letterSpacing: -0.5, fontFamily: "System", marginBottom: 18,
+    letterSpacing: -0.5, fontFamily: "Lato-Regular", marginBottom: 18,
   },
 
   /* ── STEPS CARD ── */
@@ -475,7 +477,7 @@ const st = StyleSheet.create({
     backgroundColor: GRAY100, justifyContent: "center", alignItems: "center",
   },
   programCardBody:  { padding: 14 },
-  programCardTitle: { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "System", marginBottom: 4 },
+  programCardTitle: { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 4 },
   programCardMeta:  { fontSize: 12, color: GRAY500, textTransform: "capitalize", fontFamily: "System" },
   activePill: {
     alignSelf: "flex-start", marginTop: 8,
@@ -486,7 +488,7 @@ const st = StyleSheet.create({
   /* ── EXERCISE SECTION ── */
   exercisesSection: { marginTop: 20 },
   programName: { fontSize: 20, fontWeight: "800", color: BLACK, fontFamily: "System" },
-  programDesc: { fontSize: 13, color: GRAY500, marginTop: 4, fontFamily: "System", lineHeight: 20 },
+  programDesc: { fontSize: 13, color: GRAY500, marginTop: 4, fontFamily: "Lato-Regular", lineHeight: 20 },
 
   exerciseCard: {
     backgroundColor: "rgba(255,255,255,0.92)",
@@ -495,7 +497,7 @@ const st = StyleSheet.create({
   },
   exerciseHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   exerciseDot:    { width: 8, height: 8, borderRadius: 4, backgroundColor: BLACK },
-  exerciseTitle:  { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "System", flex: 1 },
+  exerciseTitle:  { fontSize: 15, fontWeight: "700", color: BLACK, fontFamily: "Lato-Regular", flex: 1 },
   doneBadge: {
     backgroundColor: "#d1fae5", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12,
   },
@@ -512,11 +514,11 @@ const st = StyleSheet.create({
   },
   setMeta:    { width: 56 },
   setLabel:   { fontSize: 12, fontWeight: "700", color: BLACK, fontFamily: "System" },
-  setPlanned: { fontSize: 11, color: GRAY500, fontFamily: "System", marginTop: 1 },
+  setPlanned: { fontSize: 11, color: GRAY500, fontFamily: "Lato-Regular", marginTop: 1 },
   inputWrap:  { width: 56 },
   setInput: {
     backgroundColor: GRAY100, borderRadius: 8, paddingHorizontal: 8,
-    paddingVertical: 7, fontSize: 13, color: BLACK, fontFamily: "System",
+    paddingVertical: 7, fontSize: 13, color: BLACK, fontFamily: "Lato-Regular",
     borderWidth: 1, borderColor: GRAY200, textAlign: "center",
   },
   noteInput:  { flex: 1, textAlign: "left", width: undefined, minWidth: 80 },
@@ -547,5 +549,5 @@ const st = StyleSheet.create({
   },
   emptyEmoji: { fontSize: 44, marginBottom: 4 },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: BLACK, fontFamily: "System" },
-  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "System", textAlign: "center" },
+  emptySub:   { fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular", textAlign: "center" },
 });

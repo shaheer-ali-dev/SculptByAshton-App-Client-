@@ -509,10 +509,10 @@ function MealPlanForm({ heading, submitLabel, title, description, daysStr,
 function GradientBg({ style, children }: { style?: any; children: React.ReactNode }) {
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={style}
     >
       {children}
@@ -560,7 +560,7 @@ const s = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 28, fontWeight: "800", color: BLACK,
-    letterSpacing: -0.5, fontFamily: "System", flex: 1,
+    letterSpacing: -0.5, fontFamily: "Lato-Regular", flex: 1,
   },
   topBadge: {
     backgroundColor: "rgba(255,255,255,0.9)",
@@ -580,14 +580,14 @@ const s = StyleSheet.create({
   },
   searchInput: {
     flex: 1, paddingVertical: 12, fontSize: 15,
-    color: BLACK, fontFamily: "System",
+    color: BLACK, fontFamily: "Lato-Regular",
   },
 
   /* SECTION LABEL */
   listSectionLabel: {
     fontSize: 11, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.8,
-    paddingHorizontal: 16, marginBottom: 8, fontFamily: "System",
+    paddingHorizontal: 16, marginBottom: 8, fontFamily: "Lato-Regular",
   },
 
   /* LIST */
@@ -624,7 +624,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: GRAY200,
   },
   planViewTitle: { fontSize: 18, fontWeight: "800", color: BLACK, fontFamily: "System" },
-  planViewSub:   { fontSize: 12, color: GRAY500, fontFamily: "System", marginTop: 1 },
+  planViewSub:   { fontSize: 12, color: GRAY500, fontFamily: "Lato-Regular", marginTop: 1 },
   addBtn: {
     width: 40, height: 40, borderRadius: 12,
     backgroundColor: BLACK, alignItems: "center", justifyContent: "center",
@@ -682,7 +682,7 @@ const s = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 17, fontWeight: "700", color: BLACK,
-    fontFamily: "System", flex: 1, textAlign: "center",
+    fontFamily: "Lato-Regular", flex: 1, textAlign: "center",
   },
   modalContent: { paddingHorizontal: 16, paddingTop: 16 },
 
@@ -695,7 +695,7 @@ const s = StyleSheet.create({
   cardSectionLabel: {
     fontSize: 11, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.6,
-    marginBottom: 14, fontFamily: "System",
+    marginBottom: 14, fontFamily: "Lato-Regular",
   },
 
   /* DAY HEADER */
@@ -723,11 +723,11 @@ const f = StyleSheet.create({
   label: {
     fontSize: 11, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.5,
-    marginBottom: 6, fontFamily: "System",
+    marginBottom: 6, fontFamily: "Lato-Regular",
   },
   input: {
     backgroundColor: GRAY100, color: BLACK, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 11, fontSize: 14,
-    fontFamily: "System", borderWidth: 1, borderColor: GRAY200,
+    fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200,
   },
 });

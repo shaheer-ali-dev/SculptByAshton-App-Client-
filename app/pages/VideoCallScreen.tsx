@@ -1,15 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
+  Alert,
+  Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Alert,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useChatStore } from "../../store/useMessagingStore";
-import { shallow } from "zustand/shallow";
 
 /**
  * VideoCallScreen (robust; avoids re-render loops)

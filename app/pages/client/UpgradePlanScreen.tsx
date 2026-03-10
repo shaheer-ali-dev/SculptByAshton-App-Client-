@@ -100,10 +100,10 @@ export default function SubscriptionScreen() {
 
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={st.container}
     >
       <SafeAreaView style={st.safe}>
@@ -254,11 +254,11 @@ const st = StyleSheet.create({
 
   /* ── TITLE ── */
   pageTitle: {
-    fontSize: 28, fontWeight: "800", color: BLACK,
-    letterSpacing: -0.5, fontFamily: "System", marginBottom: 4,
+    fontSize: 28, fontWeight: "800", color: WHITE,
+    letterSpacing: -0.5, fontFamily: "Lato-Regular", marginBottom: 4,
   },
   pageSubtitle: {
-    fontSize: 14, color: GRAY500, fontFamily: "System", marginBottom: 20,
+    fontSize: 14, color: GRAY500, fontFamily: "Lato-Regular", marginBottom: 20,
   },
 
   /* ── LOADING ── */
@@ -288,9 +288,9 @@ const st = StyleSheet.create({
 
   remainingBig: {
     fontSize: 26, fontWeight: "800", color: BLACK,
-    fontFamily: "System", letterSpacing: -0.5, marginBottom: 4,
+    fontFamily: "Lato-Regular", letterSpacing: -0.5, marginBottom: 4,
   },
-  remainingExpiry: { fontSize: 13, color: GRAY500, fontFamily: "System", marginBottom: 16 },
+  remainingExpiry: { fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular", marginBottom: 16 },
 
   progressTrack: {
     height: 8, backgroundColor: GRAY200, borderRadius: 4, overflow: "hidden", marginBottom: 6,
@@ -332,15 +332,15 @@ const st = StyleSheet.create({
     letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4,
   },
   planTitle: {
-    fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "System", letterSpacing: -0.4,
+    fontSize: 22, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", letterSpacing: -0.4,
   },
   planPriceWrap: { alignItems: "flex-end" },
   planPrice: {
-    fontSize: 34, fontWeight: "800", color: BLACK, fontFamily: "System", letterSpacing: -1,
+    fontSize: 34, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", letterSpacing: -1,
   },
-  planPricePer: { fontSize: 12, color: GRAY500, fontFamily: "System", marginTop: -2 },
+  planPricePer: { fontSize: 12, color: GRAY500, fontFamily: "Lato-Regular", marginTop: -2 },
   planBreakdown: {
-    fontSize: 13, color: GRAY500, fontFamily: "System",
+    fontSize: 13, color: GRAY500, fontFamily: "Lato-Regular",
     paddingHorizontal: 20, marginBottom: 16,
   },
 
@@ -352,7 +352,7 @@ const st = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 12,
   },
   featureIcon: { fontSize: 18, width: 28 },
-  featureText: { flex: 1, fontSize: 14, color: BLACK, fontFamily: "System", fontWeight: "500" },
+  featureText: { flex: 1, fontSize: 14, color: BLACK, fontFamily: "Lato-Regular", fontWeight: "500" },
   featureCheck: { fontSize: 14, fontWeight: "800", color: "#059669" },
 
   /* ── CTA ── */
@@ -363,15 +363,15 @@ const st = StyleSheet.create({
     marginBottom: 10,
   },
   ctaBtnDisabled: { opacity: 0.55 },
-  ctaBtnText: { color: WHITE, fontWeight: "800", fontSize: 16, fontFamily: "System", letterSpacing: -0.2 },
+  ctaBtnText: { color: WHITE, fontWeight: "800", fontSize: 16, fontFamily: "Lato-Regular", letterSpacing: -0.2 },
 
   extendNote: {
     fontSize: 11, color: GRAY500, textAlign: "center",
-    paddingHorizontal: 20, marginBottom: 6, fontFamily: "System",
+    paddingHorizontal: 20, marginBottom: 6, fontFamily: "Lato-Regular",
   },
   secureNote: {
     fontSize: 12, color: GRAY500, textAlign: "center",
-    paddingBottom: 20, fontFamily: "System",
+    paddingBottom: 20, fontFamily: "Lato-Regular",
   },
 
   /* ── FAQ CARD ── */

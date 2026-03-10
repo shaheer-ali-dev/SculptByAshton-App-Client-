@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
 import {
-  Platform,
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
+  Image,
   KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useCoachProfileStore } from "../../../store/useCoachProfileStore";
-import * as ImagePicker from "expo-image-picker";
 
 /* ─── Color tokens (matching CRM / meal-plans) ───────────── */
 const WHITE   = "#ffffff";
@@ -124,10 +124,10 @@ export default function CoachProfileScreen() {
   if (!coach && loading) {
     return (
       <LinearGradient
-        colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-        locations={[0, 0.2, 0.5, 0.8, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
         style={s.container}
       >
         <View style={s.loadingWrap}>
@@ -140,10 +140,10 @@ export default function CoachProfileScreen() {
 
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -177,7 +177,7 @@ export default function CoachProfileScreen() {
                     uri: form.avatar
                       ? form.avatar.startsWith("http")
                         ? form.avatar
-                        : `http://localhost:5000${form.avatar}`
+                        : `http://sculptbyashton.com:5000${form.avatar}`
                       : "https://ui-avatars.com/api/?name=Coach&background=111&color=fff",
                   }}
                   style={s.avatar}
@@ -306,7 +306,7 @@ const s = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 28, fontWeight: "800", color: BLACK,
-    letterSpacing: -0.5, fontFamily: "System",
+    letterSpacing: -0.5, fontFamily: "Lato-Regular",
   },
 
   /* SCROLL */
@@ -353,7 +353,7 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 12, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.6,
-    marginBottom: 14, fontFamily: "System",
+    marginBottom: 14, fontFamily: "Lato-Regular",
   },
 
   /* SAVE BUTTON */
@@ -371,11 +371,11 @@ const f = StyleSheet.create({
   label: {
     fontSize: 11, fontWeight: "700", color: GRAY500,
     textTransform: "uppercase", letterSpacing: 0.5,
-    marginBottom: 6, fontFamily: "System",
+    marginBottom: 6, fontFamily: "Lato-Regular",
   },
   input: {
     backgroundColor: GRAY100, color: BLACK, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 11, fontSize: 14,
-    fontFamily: "System", borderWidth: 1, borderColor: GRAY200,
+    fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200,
   },
 });

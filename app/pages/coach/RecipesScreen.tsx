@@ -106,9 +106,10 @@ export default function CoachNutritionScreen() {
   ════════════════════════════════════════════════════════════ */
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -337,9 +338,10 @@ function RecipeDetailScreen({ recipe, onClose, onEdit, onDelete }: {
   const meta = CATEGORY_META[recipe.mealType] ?? CATEGORY_META.breakfast;
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+     colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -459,9 +461,10 @@ function RecipeFormScreen({ editing, onClose, onSaved }: {
 
   return (
     <LinearGradient
-      colors={["#d6d6d6", "#f0f0f0", "#ffffff", "#f0f0f0", "#d6d6d6"]}
-      locations={[0, 0.2, 0.5, 0.8, 1]}
-      start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+      colors={["#000000", "#555555", "#ffffff"]}
+locations={[0, 0.5, 1]}
+start={{x:0.5, y:0}}
+end={{x:0.5, y:1}}
       style={s.container}
     >
       <SafeAreaView style={s.safe}>
@@ -615,7 +618,7 @@ const s = StyleSheet.create({
   card:          { backgroundColor: "rgba(255,255,255,0.92)", borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 },
   mealPill:      { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, marginBottom: 8 },
   mealPillText:  { fontSize: 11, fontWeight: "700" },
-  cardTitle:     { fontSize: 18, fontWeight: "800", color: BLACK, fontFamily: "System", marginBottom: 4 },
+  cardTitle:     { fontSize: 18, fontWeight: "800", color: BLACK, fontFamily: "Lato-Regular", marginBottom: 4 },
   cardDesc:      { fontSize: 13, color: GRAY500, lineHeight: 18, marginBottom: 10 },
   cardIngredients:  { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 },
   ingChip:       { backgroundColor: GRAY100, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: GRAY200 },
@@ -670,5 +673,5 @@ const s = StyleSheet.create({
 
 const f = StyleSheet.create({
   label: { fontSize: 11, fontWeight: "700", color: GRAY500, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 },
-  input: { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, fontFamily: "System", borderWidth: 1, borderColor: GRAY200, marginBottom: 0 },
+  input: { backgroundColor: GRAY100, color: BLACK, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, fontFamily: "Lato-Regular", borderWidth: 1, borderColor: GRAY200, marginBottom: 0 },
 });
