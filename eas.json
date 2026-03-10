@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 18.1.0",
+    "appVersionSource": "remote",
+        "requireCommit": false
+
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "distribution": "internal",
+      "releaseChannel": "default"
+    }
+  },
+  
+
+  "submit": {
+    "production": {}
+  }
+}

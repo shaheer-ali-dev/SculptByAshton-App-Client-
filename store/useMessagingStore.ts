@@ -1,6 +1,6 @@
+import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
 import api from "../utils/api";
-import { io, Socket } from "socket.io-client";
 
 /* Types (add call-related) */
 export interface Message {
@@ -107,7 +107,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return;
       }
 
-      const socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
+const socket = io("http://sculptbyashton.com:5000", {
+  transports: ["websocket"],  // skip xhr polling entirely — more reliable
+});
 
       socket.on("connect", () => {
         console.log("Socket connected:", socket.id);
@@ -207,10 +209,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       formData.append("receiver", receiver);
       formData.append("duration", duration.toString());
       formData.append("voice", {
-        uri: voiceFileUri,
-        type: "audio/m4a",
-        name: `voice_${Date.now()}.m4a`,
-      } as any);
+  uri: voiceFileUri,
+  type: "audio/mp4",
+  name: `voice_${Date.now()}.m4a`,
+} as any);
       const res = await api.post("/messages/send-voice", formData);
       const message: Message = res.data;
       set({
